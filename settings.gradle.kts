@@ -29,5 +29,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "Inventory"
+rootProject.name = "TogetherLedger"
 include(":app")

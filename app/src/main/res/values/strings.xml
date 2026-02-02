@@ -14,25 +14,21 @@
   ~ limitations under the License.
   -->
 <resources>
-    <string name="app_name">Inventory</string>
-    <string name="attention">Attention</string>
-    <string name="back_button">Back</string>
-    <string name="delete">Delete</string>
-    <string name="delete_question">Are you sure you want to delete?</string>
-    <string name="no_item_description">Oops!\nNo items in the inventory.\nTap + to add.</string>
-    <string name="edit_item_title">Edit Item</string>
-    <string name="item">Item</string>
-    <string name="item_detail_title">Item Details</string>
-    <string name="item_entry_title">Add Item</string>
-    <string name="item_name_req">Item Name*</string>
-    <string name="item_price_req">Item Price*</string>
-    <string name="no">No</string>
-    <string name="price">Price</string>
-    <string name="quantity_in_stock">Quantity in stock</string>
-    <string name="in_stock">%d in stock</string>
-    <string name="quantity_req">Quantity in Stock*</string>
-    <string name="save_action">Save</string>
-    <string name="sell">Sell</string>
-    <string name="yes">Yes</string>
-    <string name="required_fields">*required fields</string>
+
+    <string name="app_name">TogetherLedger</string>
+    <string name="daily_screen">일별 조회</string>
+    <string name="back_button">뒤로</string>
+    <string name="no_item_description">No data.\nTap + to add.</string>
+    <string name="transaction_detail_title">항목 조회</string>
+    <string name="transaction_edit_title">편집</string>
+    <string name="transaction_entry_title">입력</string>
+    <string name="save_action">저장</string>
+    <string name="transaction_name_req">*이름</string>
+    <string name="transaction_category_req">구분</string>
+    <string name="transaction_timestamp_req">*시각 yyyy-MM-dd HH:mm:ss</string>
+    <string name="transaction_content_req">*내용</string>
+    <string name="transaction_amount_req">*금액</string>
+    <string name="transaction_asset_type_req">자산</string>
+    <string name="transaction_is_income_req">*지출/수입</string>
+    <string name="required_fields">*필수 입력</string>
 </resources>

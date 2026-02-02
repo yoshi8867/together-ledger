@@ -25,7 +25,8 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.inventory"
+//        applicationId = "com.example.inventory"
+        applicationId = "com.yoshi0311.togetherledger"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -61,7 +62,8 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    namespace = "com.example.inventory"
+    // namespace = "com.example.inventory"
+    namespace = "com.yoshi0311.togetherledger"
 }
 
 dependencies {
