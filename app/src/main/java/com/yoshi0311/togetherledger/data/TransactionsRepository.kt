@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 interface TransactionsRepository {
     fun getAllTransactionsStream(): Flow<List<Transaction>>
     fun getTransactionStream(id: Int): Flow<Transaction?>
+    fun getTransactionByPeriodStream(start: String, end: String): Flow<List<Transaction>>
     suspend fun insertTransaction(transaction: Transaction)
     suspend fun deleteTransaction(transaction: Transaction)
     suspend fun updateTransaction(transaction: Transaction)

@@ -1,5 +1,6 @@
 package com.yoshi0311.togetherledger.ui.daily
 
+import android.R.attr.x
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -18,6 +19,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,6 +53,7 @@ import com.yoshi0311.togetherledger.ui.AppViewModelProvider
 import com.yoshi0311.togetherledger.ui.navigation.NavigationDestination
 import com.yoshi0311.togetherledger.ui.theme.TogetherLedgerTheme
 import java.text.NumberFormat
+import java.time.LocalDate
 import java.util.Locale
 
 object DailyDestination : NavigationDestination {
@@ -102,6 +107,7 @@ fun DailyScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun DailyBody(
     transactionList: List<Transaction>,
@@ -160,7 +166,8 @@ private fun DailyItem(
 ) {
 //    val dateTime = LocalDateTime.parse(transaction.timeStamp)
     Card(
-        modifier = modifier, elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
             modifier = Modifier
@@ -171,14 +178,14 @@ private fun DailyItem(
             // 좌측: 분류
             Text(
                 text = transaction.category,
-                modifier = Modifier.weight(1f), // 좌측 정렬
+                modifier = Modifier.weight(2f), // 좌측 정렬
                 fontSize = 14.sp
             )
 
             // 중앙: 내용 + 시각
             Column(
-                modifier = Modifier.weight(3f),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.weight(5f),
+                horizontalAlignment = Alignment.Start,
             ) {
                 Text(
                     text = transaction.content,
@@ -195,7 +202,7 @@ private fun DailyItem(
             // 우측: 금액
             Box(
                 modifier = Modifier
-                    .weight(1f)  // 좌/중/우 비율 유지
+                    .weight(2f)  // 좌/중/우 비율 유지
                     .fillMaxWidth(), // Box가 전체 weight 공간을 차지
                 contentAlignment = Alignment.CenterEnd // 우측 정렬
             ) {
@@ -210,8 +217,140 @@ private fun DailyItem(
     }
 }
 
+@Composable
+fun MonthButton(
+    modifier: Modifier = Modifier,
+    year: Int = LocalDate.now().year,
+    month: Int = LocalDate.now().monthValue,
+) {
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp, horizontal = 30.dp, ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Button(
+                modifier = modifier.weight(2f),
+                onClick = { },
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowLeft,
+                    contentDescription = stringResource(R.string.prev),
+                )
+            }
+            Button(
+                modifier = modifier.weight(4f).padding(horizontal = 5.dp),
+                onClick = { },
+            ) {
+                Text(
+                    text = year.toString() + stringResource(R.string.year)
+                            + month.toString() + stringResource(R.string.month),
+                    fontSize = 18.sp,
+                )
+            }
+            Button(
+                modifier = modifier.weight(2f),
+                onClick = { },
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowRight,
+                    contentDescription = stringResource(R.string.next),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MonthPicker(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp, horizontal = 30.dp, ),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Button(
+                    modifier = modifier.weight(2f),
+                    onClick = { },
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowLeft,
+                        contentDescription = stringResource(R.string.prev),
+                    )
+                }
+                Button(
+                    modifier = modifier.weight(4f).padding(horizontal = 5.dp),
+                    onClick = { },
+                ) {
+                    Text(
+                        text = "2026" + stringResource(R.string.year),
+                        fontSize = 15.sp,
+                    )
+                }
+                Button(
+                    modifier = modifier.weight(2f),
+                    onClick = { },
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = stringResource(R.string.next),
+                    )
+                }
+                Button(
+                    modifier = modifier.weight(3f).padding(horizontal = 5.dp),
+                    onClick = { },
+                ) {
+                    Text(
+                        text = stringResource(R.string.this_month),
+                        fontSize = 15.sp,
+                    )
+                }
+            }
+
+            for (i in 0..2) {
+                Row {
+                    for (j in 1..4) {
+                        val x = i*4 + j
+                        Button(
+                            modifier = modifier.weight(2f).padding(horizontal = 2.dp),
+                            onClick = { },
+                        ) {
+                            Text(
+                                text = x.toString() + stringResource(R.string.month),
+                                fontSize = 13.sp,
+                            )
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
+@Composable
+fun TestPreview() {
+    TogetherLedgerTheme {
+        MonthPicker()
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeBodyEmptyListPreview() {
     TogetherLedgerTheme {

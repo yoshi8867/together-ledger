@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDateTime
 
 @Dao
 interface TransactionDao {
@@ -15,6 +16,12 @@ interface TransactionDao {
 
     @Query("SELECT * from transactions WHERE id = :id")
     fun getTransaction(id: Int): Flow<Transaction>
+
+    @Query("SELECT * from transactions WHERE timestamp >= :start AND timestamp < :end")
+    fun getTransactionsByPeriod(
+        start: String, // LocalDateTime, // 나중에 String에서 LocalDateTime으로 바꿀 것
+        end: String, // LocalDateTime,
+    ): Flow<List<Transaction>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(transaction: Transaction)

@@ -43,4 +43,12 @@
     <string name="delete_question">삭제하시겠습니까?</string>
     <string name="yes">예</string>
     <string name="no">아니오</string>
+
+    <string name="year">년</string>
+    <string name="month">월</string>
+    <string name="date">일</string>
+
+    <string name="next">다음</string>
+    <string name="prev">이전</string>
+    <string name="this_month">이달</string>
 </resources>
