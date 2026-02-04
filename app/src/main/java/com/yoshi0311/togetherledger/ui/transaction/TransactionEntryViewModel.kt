@@ -60,6 +60,11 @@ fun TransactionDetails.toTransaction(): Transaction = Transaction(
     isIncome = isIncome,
 )
 
+fun Transaction.toTransactionUiState(isEntryValid: Boolean = false): TransactionUiState = TransactionUiState(
+    transactionDetails = this.toTransactionDetails(),
+    isEntryValid = isEntryValid
+)
+
 fun Transaction.toTransactionDetails(): TransactionDetails = TransactionDetails(
     id = id,
     category = category,

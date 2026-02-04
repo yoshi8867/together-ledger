@@ -56,7 +56,7 @@ object TransactionDetailsDestination : NavigationDestination {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionDetailsScreen(
-    navigateToEditItem: (Int) -> Unit,
+    navigateToEdit: (Int) -> Unit,
     navigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TransactionDetailsViewModel = viewModel(factory = AppViewModelProvider.Factory),
@@ -74,7 +74,7 @@ fun TransactionDetailsScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navigateToEditItem(uiState.value.transactionDetails.id) },
+                onClick = { navigateToEdit(uiState.value.transactionDetails.id) },
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier
                     .padding(

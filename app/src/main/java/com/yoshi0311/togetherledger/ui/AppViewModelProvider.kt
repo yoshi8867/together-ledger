@@ -9,6 +9,7 @@ import com.yoshi0311.togetherledger.LedgerApplication
 import com.yoshi0311.togetherledger.data.Transaction
 import com.yoshi0311.togetherledger.ui.daily.DailyViewModel
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsViewModel
+import com.yoshi0311.togetherledger.ui.transaction.TransactionEditViewModel
 import com.yoshi0311.togetherledger.ui.transaction.TransactionEntryViewModel
 
 object AppViewModelProvider {
@@ -24,6 +25,12 @@ object AppViewModelProvider {
         // Initializer for TransactionDetailsViewModel
         initializer {
             TransactionDetailsViewModel(
+                this.createSavedStateHandle(),
+                ledgerApplication().container.transactionsRepository
+            )
+        }// Initializer for TransactionEditViewModel
+        initializer {
+            TransactionEditViewModel(
                 this.createSavedStateHandle(),
                 ledgerApplication().container.transactionsRepository
             )

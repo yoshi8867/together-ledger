@@ -11,6 +11,8 @@ import com.yoshi0311.togetherledger.ui.daily.DailyDestination
 import com.yoshi0311.togetherledger.ui.daily.DailyScreen
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsDestination
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsScreen
+import com.yoshi0311.togetherledger.ui.transaction.TransactionEditDestination
+import com.yoshi0311.togetherledger.ui.transaction.TransactionEditScreen
 import com.yoshi0311.togetherledger.ui.transaction.TransactionEntryDestination
 import com.yoshi0311.togetherledger.ui.transaction.TransactionEntryScreen
 
@@ -39,10 +41,21 @@ fun AppNavHost(
             })
         ) {
             TransactionDetailsScreen(
-                navigateToEditItem = {
-//                    navController.navigate("${ItemEditDestination.route}/$it")
+                navigateToEdit = {
+                    navController.navigate("${TransactionEditDestination.route}/$it")
                  },
                 navigateBack = { navController.navigateUp() }
+            )
+        }
+        composable(
+            route = TransactionEditDestination.routeWithArgs,
+            arguments = listOf(navArgument(TransactionEditDestination.transactionIdArg) {
+                type = NavType.IntType
+            })
+        ) {
+            TransactionEditScreen(
+                navigateBack = { navController.popBackStack() },
+                onNavigateUp = { navController.navigateUp() }
             )
         }
         composable(route = TransactionEntryDestination.route) {
