@@ -65,8 +65,10 @@ class DailyViewModel(private val transactionsRepository: TransactionsRepository)
     }
 
     fun getMonthToMonth(year: Int, month: Int): Pair<String, String> {
+        val endYear = if (month == 12) year+1 else year
+        val endMonth = if (month == 12) 1 else month+1
         val startDateTime = LocalDateTime.of(year, month, 1, 0, 0, 0)
-        val endDateTime = LocalDateTime.of(year, month+1, 1, 0, 0, 0)
+        val endDateTime = LocalDateTime.of(endYear, endMonth, 1, 0, 0, 0)
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         return Pair(
             startDateTime.format(formatter),

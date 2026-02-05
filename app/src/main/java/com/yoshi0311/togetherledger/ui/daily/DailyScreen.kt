@@ -51,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.Log
 import com.yoshi0311.togetherledger.LedgerTopAppBar
 import com.yoshi0311.togetherledger.R
 import com.yoshi0311.togetherledger.data.Transaction
@@ -59,6 +60,7 @@ import com.yoshi0311.togetherledger.ui.navigation.NavigationDestination
 import com.yoshi0311.togetherledger.ui.theme.TogetherLedgerTheme
 import java.text.NumberFormat
 import java.util.Locale
+import kotlin.math.log
 
 object DailyDestination : NavigationDestination {
     override val route = "daily"
