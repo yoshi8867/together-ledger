@@ -23,7 +23,6 @@ class TransactionEntryViewModel(private val transactionsRepository: Transactions
 
     suspend fun saveTransaction() {
         if (validateInput()) {
-            Log.d("test", "hello")
             transactionsRepository.insertTransaction(transactionUiState.transactionDetails.toTransaction())
         }
     }

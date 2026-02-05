@@ -1,6 +1,5 @@
 package com.yoshi0311.togetherledger.ui.daily
 
-import android.R.attr.x
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -13,14 +12,18 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,6 +31,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,7 +58,6 @@ import com.yoshi0311.togetherledger.ui.AppViewModelProvider
 import com.yoshi0311.togetherledger.ui.navigation.NavigationDestination
 import com.yoshi0311.togetherledger.ui.theme.TogetherLedgerTheme
 import java.text.NumberFormat
-import java.time.LocalDate
 import java.util.Locale
 
 object DailyDestination : NavigationDestination {
@@ -80,6 +84,19 @@ fun DailyScreen(
                 canNavigateBack = false,
                 scrollBehavior = scrollBehavior
             )
+        },
+        bottomBar = {
+            NavigationBar(
+                modifier = Modifier.navigationBarsPadding()
+            ) {
+                Column {
+                    MonthButton(
+                        modifier = modifier,
+                        dailyUiState = dailyUiState,
+                        onMonthSelected = viewModel::selectMonth,
+                    )
+                }
+            }
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -220,8 +237,8 @@ private fun DailyItem(
 @Composable
 fun MonthButton(
     modifier: Modifier = Modifier,
-    year: Int = LocalDate.now().year,
-    month: Int = LocalDate.now().monthValue,
+    dailyUiState: DailyUiState,
+    onMonthSelected: (year: Int, month: Int) -> Unit,
 ) {
     Card(
         modifier = modifier,
@@ -235,7 +252,16 @@ fun MonthButton(
         ) {
             Button(
                 modifier = modifier.weight(2f),
-                onClick = { },
+                onClick = {
+                    val currentYear = dailyUiState.selectedYear
+                    val currentMonth = dailyUiState.selectedMonth
+                    val newMonth = (currentMonth - 1 + 12) % 12
+                    val newYear = if (newMonth == 0) currentYear - 1 else currentYear
+                    onMonthSelected(
+                        newYear,
+                        if (newMonth == 0) 12 else newMonth,
+                    )
+                },
             ) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowLeft,
@@ -244,17 +270,28 @@ fun MonthButton(
             }
             Button(
                 modifier = modifier.weight(4f).padding(horizontal = 5.dp),
-                onClick = { },
+                onClick = {
+
+                },
             ) {
                 Text(
-                    text = year.toString() + stringResource(R.string.year)
-                            + month.toString() + stringResource(R.string.month),
+                    text = dailyUiState.selectedYear.toString() + stringResource(R.string.year)
+                            + dailyUiState.selectedMonth.toString() + stringResource(R.string.month),
                     fontSize = 18.sp,
                 )
             }
             Button(
                 modifier = modifier.weight(2f),
-                onClick = { },
+                onClick = {
+                    val currentYear = dailyUiState.selectedYear
+                    val currentMonth = dailyUiState.selectedMonth
+                    val newMonth = (currentMonth + 1) % 12
+                    val newYear = if (newMonth == 1) currentYear + 1 else currentYear
+                    onMonthSelected(
+                        newYear,
+                        newMonth,
+                    )
+                },
             ) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowRight,
@@ -266,7 +303,11 @@ fun MonthButton(
 }
 
 @Composable
-fun MonthPicker(modifier: Modifier = Modifier) {
+fun MonthPicker(
+    modifier: Modifier = Modifier,
+    dailyUiState: DailyUiState,
+    onMonthSelected: (year: Int, month: Int) -> Unit,
+) {
     Card(
         modifier = modifier,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -284,7 +325,9 @@ fun MonthPicker(modifier: Modifier = Modifier) {
             ) {
                 Button(
                     modifier = modifier.weight(2f),
-                    onClick = { },
+                    onClick = {
+
+                    },
                 ) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowLeft,
@@ -293,16 +336,18 @@ fun MonthPicker(modifier: Modifier = Modifier) {
                 }
                 Button(
                     modifier = modifier.weight(4f).padding(horizontal = 5.dp),
-                    onClick = { },
+                    onClick = {
+                    },
                 ) {
                     Text(
-                        text = "2026" + stringResource(R.string.year),
+                        text = dailyUiState.selectedYear.toString() + stringResource(R.string.year),
                         fontSize = 15.sp,
                     )
                 }
                 Button(
                     modifier = modifier.weight(2f),
-                    onClick = { },
+                    onClick = {
+                    },
                 ) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowRight,
@@ -311,7 +356,9 @@ fun MonthPicker(modifier: Modifier = Modifier) {
                 }
                 Button(
                     modifier = modifier.weight(3f).padding(horizontal = 5.dp),
-                    onClick = { },
+                    onClick = {
+                        // MonthPicker on/off
+                    },
                 ) {
                     Text(
                         text = stringResource(R.string.this_month),
@@ -346,7 +393,7 @@ fun MonthPicker(modifier: Modifier = Modifier) {
 @Composable
 fun TestPreview() {
     TogetherLedgerTheme {
-        MonthPicker()
+        // MonthPicker()
     }
 }
 
