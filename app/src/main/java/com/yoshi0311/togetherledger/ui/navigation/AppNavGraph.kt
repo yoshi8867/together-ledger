@@ -9,7 +9,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.yoshi0311.togetherledger.ui.menu.DailyDestination
 import com.yoshi0311.togetherledger.ui.menu.DailyScreen
-import com.yoshi0311.togetherledger.ui.menu.MonthlyDestination
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsDestination
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsScreen
 import com.yoshi0311.togetherledger.ui.transaction.TransactionEditDestination

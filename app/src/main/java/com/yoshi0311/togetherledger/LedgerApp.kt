@@ -16,7 +16,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.TextButton
 import androidx.navigation.NavController
 import com.yoshi0311.togetherledger.ui.menu.DailyDestination
-import com.yoshi0311.togetherledger.ui.menu.MonthlyDestination
 
 @Composable
 fun LedgerApp(navController: NavHostController = rememberNavController()) {
