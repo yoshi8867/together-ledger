@@ -30,13 +30,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -64,6 +69,12 @@ object DailyDestination : NavigationDestination {
     override val titleRes = R.string.daily_screen
 }
 
+enum class ScreenType {
+    LIST,       // 목록 조회
+    CALENDAR,   // 캘린더 조회
+    STATISTICS  // 통계 그래프
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DailyScreen(
@@ -74,15 +85,42 @@ fun DailyScreen(
 ) {
     val dailyUiState by viewModel.listUiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val screenType = remember { mutableStateOf(ScreenType.LIST) }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LedgerTopAppBar(
-                title = stringResource(DailyDestination.titleRes),
-                canNavigateBack = false,
-                scrollBehavior = scrollBehavior,
-            )
+            Column() {
+                LedgerTopAppBar(
+                    title = stringResource(DailyDestination.titleRes),
+                    canNavigateBack = false,
+                    scrollBehavior = scrollBehavior,
+                )
+                val options = listOf(ScreenType.LIST, ScreenType.CALENDAR, ScreenType.STATISTICS)
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    options.forEach { type ->
+                        SegmentedButton(
+                            selected = screenType.value == type,
+                            onClick = { screenType.value = type },
+                            label = {
+                                when(type) {
+                                    ScreenType.LIST -> Text("일별")
+                                    ScreenType.CALENDAR -> Text("캘린더")
+                                    ScreenType.STATISTICS -> Text("통계")
+                                }
+                            },
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 4.dp)
+                        )
+                    }
+                }
+            }
         },
         bottomBar = {
             NavigationBar(
@@ -119,6 +157,7 @@ fun DailyScreen(
             onItemClick = navigateToTransactionUpdate,
             modifier = modifier.fillMaxSize(),
             contentPadding = innerPadding,
+            screenType = screenType,
         )
     }
 }
@@ -129,6 +168,7 @@ private fun DailyBody(
     onItemClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    screenType: MutableState<ScreenType>,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -142,12 +182,21 @@ private fun DailyBody(
                 modifier = Modifier.padding(contentPadding),
             )
         } else {
-            DailyList(
-                transactionList = transactionList,
-                onItemClick = { onItemClick(it.id) },
-                contentPadding = contentPadding,
-                modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.padding_small)),
-            )
+            when (screenType.value) {
+                ScreenType.CALENDAR -> {
+                }
+                ScreenType.STATISTICS -> {
+                }
+                // ScreenType.LIST
+                else -> {
+                    DailyList(
+                        transactionList = transactionList,
+                        onItemClick = { onItemClick(it.id) },
+                        contentPadding = contentPadding,
+                        modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.padding_small)),
+                    )
+                }
+            }
         }
     }
 }
