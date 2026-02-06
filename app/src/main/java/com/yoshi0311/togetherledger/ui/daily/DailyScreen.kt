@@ -67,6 +67,7 @@ object DailyDestination : NavigationDestination {
     override val titleRes = R.string.daily_screen
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DailyScreen(
