@@ -1,38 +1,34 @@
-package com.yoshi0311.togetherledger.ui.daily
+package com.yoshi0311.togetherledger.ui.menu
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yoshi0311.togetherledger.data.Transaction
 import com.yoshi0311.togetherledger.data.TransactionsRepository
-import com.yoshi0311.togetherledger.ui.transaction.toTransactionUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.text.format
 
 class DailyViewModel(private val transactionsRepository: TransactionsRepository): ViewModel() {
 
     private val today = LocalDate.now()
     private val _selectedDate = MutableStateFlow(Pair(today.year, today.monthValue))
 
-    private val _dailyUiState = MutableStateFlow(DailyUiState())
+    private val _listUiState = MutableStateFlow(ListUiState())
 
-    val dailyUiState: StateFlow<DailyUiState> =
+    val listUiState: StateFlow<ListUiState> =
         combine(
 //            transactionsRepository.getAllTransactionsStream(),
-            _dailyUiState,
+            _listUiState,
             // transactionsRepository.getTransactionByPeriodStream(startDateTime.format(formatter), endDateTime.format(formatter)),
             _selectedDate,
         ) { uiState, (year, month) ->
-            DailyUiState(
+            ListUiState(
                 transactionList = uiState.transactionList,
                 selectedYear = year,
                 selectedMonth = month
@@ -40,7 +36,7 @@ class DailyViewModel(private val transactionsRepository: TransactionsRepository)
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
-            initialValue = DailyUiState()
+            initialValue = ListUiState()
         )
 
     init {
@@ -50,7 +46,7 @@ class DailyViewModel(private val transactionsRepository: TransactionsRepository)
     suspend fun updatePeriod(start: String, end: String) {
         transactionsRepository.getTransactionByPeriodStream(start, end)
             .collect { list ->
-                _dailyUiState.value = _dailyUiState.value.copy(
+                _listUiState.value = _listUiState.value.copy(
                     transactionList = list
                 )
             }
@@ -90,8 +86,8 @@ class DailyViewModel(private val transactionsRepository: TransactionsRepository)
     }
 }
 
-data class DailyUiState(
+data class ListUiState(
     val transactionList: List<Transaction> = listOf(),
-    val selectedYear: Int = 0, // 현재 날짜의 연+월을 set 하는 건 어느 타이밍에 어느 부분에서 하는 거지?
+    val selectedYear: Int = 0,
     val selectedMonth: Int = 0,
 )

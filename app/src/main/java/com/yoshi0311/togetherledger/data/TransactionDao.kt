@@ -11,13 +11,13 @@ import java.time.LocalDateTime
 
 @Dao
 interface TransactionDao {
-    @Query("SELECT * from transactions ORDER BY timestamp ASC")
+    @Query("SELECT * from transactions ORDER BY timestamp DESC")
     fun getAllTransactions(): Flow<List<Transaction>>
 
     @Query("SELECT * from transactions WHERE id = :id")
     fun getTransaction(id: Int): Flow<Transaction>
 
-    @Query("SELECT * from transactions WHERE timestamp >= :start AND timestamp < :end")
+    @Query("SELECT * from transactions WHERE timestamp >= :start AND timestamp < :end ORDER BY DATE(timestamp) DESC, TIME(timestamp) ASC")
     fun getTransactionsByPeriod(
         start: String, // LocalDateTime, // 나중에 String에서 LocalDateTime으로 바꿀 것
         end: String, // LocalDateTime,

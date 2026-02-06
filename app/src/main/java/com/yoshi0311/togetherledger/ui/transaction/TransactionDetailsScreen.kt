@@ -39,6 +39,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.yoshi0311.togetherledger.LedgerTopAppBar
 import com.yoshi0311.togetherledger.R
 import com.yoshi0311.togetherledger.data.Transaction
@@ -69,7 +70,7 @@ fun TransactionDetailsScreen(
             LedgerTopAppBar(
                 title = stringResource(TransactionDetailsDestination.titleRes),
                 canNavigateBack = true,
-                navigateUp = navigateBack
+                navigateUp = navigateBack,
             )
         },
         floatingActionButton = {

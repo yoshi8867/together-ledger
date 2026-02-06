@@ -1,4 +1,4 @@
-package com.yoshi0311.togetherledger.ui.daily
+package com.yoshi0311.togetherledger.ui.menu
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -20,10 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -32,7 +29,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,7 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.util.Log
+import androidx.navigation.NavController
 import com.yoshi0311.togetherledger.LedgerTopAppBar
 import com.yoshi0311.togetherledger.R
 import com.yoshi0311.togetherledger.data.Transaction
@@ -59,15 +55,15 @@ import com.yoshi0311.togetherledger.ui.AppViewModelProvider
 import com.yoshi0311.togetherledger.ui.navigation.NavigationDestination
 import com.yoshi0311.togetherledger.ui.theme.TogetherLedgerTheme
 import java.text.NumberFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlin.math.log
 
 object DailyDestination : NavigationDestination {
     override val route = "daily"
     override val titleRes = R.string.daily_screen
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DailyScreen(
@@ -76,7 +72,7 @@ fun DailyScreen(
     modifier: Modifier = Modifier,
     viewModel: DailyViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
-    val dailyUiState by viewModel.dailyUiState.collectAsState()
+    val dailyUiState by viewModel.listUiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
@@ -85,7 +81,7 @@ fun DailyScreen(
             LedgerTopAppBar(
                 title = stringResource(DailyDestination.titleRes),
                 canNavigateBack = false,
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
             )
         },
         bottomBar = {
@@ -93,9 +89,9 @@ fun DailyScreen(
                 modifier = Modifier.navigationBarsPadding()
             ) {
                 Column {
-                    MonthButton(
+                    SelectMonthButton(
                         modifier = modifier,
-                        dailyUiState = dailyUiState,
+                        listUiState = dailyUiState,
                         onMonthSelected = viewModel::selectMonth,
                     )
                 }
@@ -127,7 +123,6 @@ fun DailyScreen(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun DailyBody(
     transactionList: List<Transaction>,
@@ -157,7 +152,6 @@ private fun DailyBody(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun DailyList(
     transactionList: List<Transaction>,
@@ -165,20 +159,53 @@ private fun DailyList(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier
 ) {
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    val grouped = transactionList.groupBy { transaction ->
+        // String → LocalDateTime → LocalDate
+        val dateTime = LocalDateTime.parse(transaction.timeStamp, formatter)
+        dateTime.toLocalDate()
+    }
+
     LazyColumn(
         modifier = modifier,
         contentPadding = contentPadding
     ) {
-        items(items = transactionList, key = { it.id }) { transaction ->
-            DailyItem(transaction = transaction,
-                modifier = Modifier
-                    .padding(dimensionResource(id = R.dimen.padding_small))
-                    .clickable { onItemClick(transaction) })
+//        items(items = transactionList, key = { it.id }) { transaction ->
+//            DailyItem(transaction = transaction,
+//                modifier = Modifier
+//                    .padding(dimensionResource(id = R.dimen.padding_small))
+//                    .clickable { onItemClick(transaction) })
+//        }
+
+        grouped.forEach { (date, transactions) ->
+
+            val incomeTotal = transactions.filter { it.isIncome }.sumOf { it.amount }
+            val expenseTotal = transactions.filter { !it.isIncome }.sumOf { it.amount }
+            val incomeTotalString = "${NumberFormat.getNumberInstance(Locale.KOREA).format(incomeTotal)}원"
+            val expenseTotalString = "${NumberFormat.getNumberInstance(Locale.KOREA).format(expenseTotal)}원"
+
+            item {
+                Text(
+                    text = date.format(DateTimeFormatter.ofPattern(
+                        "M.d.(E)", Locale.KOREA)),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        .padding(dimensionResource(id = R.dimen.padding_small))
+                )
+            }
+            items(transactions, key = { it.id }) { transaction ->
+                DailyItem(
+                    transaction = transaction,
+                    modifier = Modifier
+                        .padding(dimensionResource(id = R.dimen.padding_small))
+                        .clickable { onItemClick(transaction) }
+                )
+            }
         }
+
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun DailyItem(
     transaction: Transaction,
@@ -238,9 +265,9 @@ private fun DailyItem(
 }
 
 @Composable
-fun MonthButton(
+fun SelectMonthButton(
     modifier: Modifier = Modifier,
-    dailyUiState: DailyUiState,
+    listUiState: ListUiState,
     onMonthSelected: (year: Int, month: Int) -> Unit,
 ) {
     Card(
@@ -256,8 +283,8 @@ fun MonthButton(
             Button(
                 modifier = modifier.weight(2f),
                 onClick = {
-                    val currentYear = dailyUiState.selectedYear
-                    val currentMonth = dailyUiState.selectedMonth
+                    val currentYear = listUiState.selectedYear
+                    val currentMonth = listUiState.selectedMonth
                     val newMonth = (currentMonth - 1 + 12) % 12
                     val newYear = if (newMonth == 0) currentYear - 1 else currentYear
                     onMonthSelected(
@@ -278,16 +305,16 @@ fun MonthButton(
                 },
             ) {
                 Text(
-                    text = dailyUiState.selectedYear.toString() + stringResource(R.string.year)
-                            + dailyUiState.selectedMonth.toString() + stringResource(R.string.month),
+                    text = listUiState.selectedYear.toString() + stringResource(R.string.year)
+                            + listUiState.selectedMonth.toString() + stringResource(R.string.month),
                     fontSize = 18.sp,
                 )
             }
             Button(
                 modifier = modifier.weight(2f),
                 onClick = {
-                    val currentYear = dailyUiState.selectedYear
-                    val currentMonth = dailyUiState.selectedMonth
+                    val currentYear = listUiState.selectedYear
+                    val currentMonth = listUiState.selectedMonth
                     val newMonth = (currentMonth + 1) % 12
                     val newYear = if (newMonth == 1) currentYear + 1 else currentYear
                     onMonthSelected(
@@ -308,7 +335,7 @@ fun MonthButton(
 @Composable
 fun MonthPicker(
     modifier: Modifier = Modifier,
-    dailyUiState: DailyUiState,
+    listUiState: ListUiState,
     onMonthSelected: (year: Int, month: Int) -> Unit,
 ) {
     Card(
@@ -343,7 +370,7 @@ fun MonthPicker(
                     },
                 ) {
                     Text(
-                        text = dailyUiState.selectedYear.toString() + stringResource(R.string.year),
+                        text = listUiState.selectedYear.toString() + stringResource(R.string.year),
                         fontSize = 15.sp,
                     )
                 }

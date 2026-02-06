@@ -6,8 +6,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.yoshi0311.togetherledger.LedgerApplication
-import com.yoshi0311.togetherledger.data.Transaction
-import com.yoshi0311.togetherledger.ui.daily.DailyViewModel
+import com.yoshi0311.togetherledger.ui.menu.DailyViewModel
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsViewModel
 import com.yoshi0311.togetherledger.ui.transaction.TransactionEditViewModel
 import com.yoshi0311.togetherledger.ui.transaction.TransactionEntryViewModel

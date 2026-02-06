@@ -17,6 +17,7 @@
 
     <string name="app_name">TogetherLedger</string>
     <string name="daily_screen">일별 조회</string>
+    <string name="montly_screen">월별 조회</string>
     <string name="back_button">뒤로</string>
     <string name="no_item_description">No data.\nTap + to add.</string>
     <string name="transaction_detail_title">항목 조회</string>

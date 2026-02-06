@@ -7,8 +7,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.yoshi0311.togetherledger.ui.daily.DailyDestination
-import com.yoshi0311.togetherledger.ui.daily.DailyScreen
+import com.yoshi0311.togetherledger.ui.menu.DailyDestination
+import com.yoshi0311.togetherledger.ui.menu.DailyScreen
+import com.yoshi0311.togetherledger.ui.menu.MonthlyDestination
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsDestination
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsScreen
 import com.yoshi0311.togetherledger.ui.transaction.TransactionEditDestination
@@ -44,7 +45,7 @@ fun AppNavHost(
                 navigateToEdit = {
                     navController.navigate("${TransactionEditDestination.route}/$it")
                  },
-                navigateBack = { navController.navigateUp() }
+                navigateBack = { navController.navigateUp() },
             )
         }
         composable(
@@ -55,7 +56,7 @@ fun AppNavHost(
         ) {
             TransactionEditScreen(
                 navigateBack = { navController.popBackStack() },
-                onNavigateUp = { navController.navigateUp() }
+                onNavigateUp = { navController.navigateUp() },
             )
         }
         composable(route = TransactionEntryDestination.route) {
