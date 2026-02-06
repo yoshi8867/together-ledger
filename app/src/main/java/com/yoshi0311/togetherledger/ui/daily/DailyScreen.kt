@@ -291,7 +291,7 @@ fun MonthButton(
                     val newYear = if (newMonth == 1) currentYear + 1 else currentYear
                     onMonthSelected(
                         newYear,
-                        newMonth,
+                        if (newMonth == 0) 12 else newMonth,
                     )
                 },
             ) {
