@@ -1,10 +1,10 @@
 package com.yoshi0311.togetherledger.ui.menu
 
 import android.os.Build
-import android.widget.CalendarView
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -34,6 +35,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -58,7 +60,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import com.yoshi0311.togetherledger.LedgerTopAppBar
 import com.yoshi0311.togetherledger.R
 import com.yoshi0311.togetherledger.data.Transaction
@@ -92,7 +93,7 @@ fun DailyScreen(
     modifier: Modifier = Modifier,
     viewModel: DailyViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
-    val dailyUiState by viewModel.listUiState.collectAsState()
+    val listUiState by viewModel.listUiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val screenType = remember { mutableStateOf(ScreenType.LIST) }
 
@@ -138,7 +139,7 @@ fun DailyScreen(
                 Column {
                     SelectMonthButton(
                         modifier = modifier,
-                        listUiState = dailyUiState,
+                        listUiState = listUiState,
                         onMonthSelected = viewModel::selectMonth,
                     )
                 }
@@ -162,10 +163,11 @@ fun DailyScreen(
         },
     ) { innerPadding ->
         DailyBody(
-            transactionList = dailyUiState.transactionList,
+            transactionList = listUiState.transactionList,
             onItemClick = navigateToTransactionUpdate,
             modifier = modifier.fillMaxSize(),
             contentPadding = innerPadding,
+            listUiState = listUiState,
             screenType = screenType,
         )
     }
@@ -177,27 +179,35 @@ private fun DailyBody(
     onItemClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    listUiState: ListUiState,
     screenType: MutableState<ScreenType>,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier,
     ) {
-        if (transactionList.isEmpty()) {
-            Text(
-                text = stringResource(R.string.no_item_description),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(contentPadding),
-            )
-        } else {
-            when (screenType.value) {
-                ScreenType.CALENDAR -> {
-                }
-                ScreenType.STATISTICS -> {
-                }
-                // ScreenType.LIST
-                else -> {
+        when (screenType.value) {
+            ScreenType.CALENDAR -> {
+                CalendarView(
+                    transactionList = transactionList,
+                    year = listUiState.selectedYear,
+                    month = listUiState.selectedMonth,
+                    startDayOfWeek = StartDayOfWeek.Sunday, // TODO: 사용자가 직접 설정하도록 변경할 것
+                    modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.padding_small)),
+                )
+            }
+            ScreenType.STATISTICS -> {
+            }
+            // ScreenType.LIST
+            else -> {
+                if (transactionList.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.no_item_description),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(contentPadding),
+                    )
+                } else {
                     DailyList(
                         transactionList = transactionList,
                         onItemClick = { onItemClick(it.id) },
@@ -215,7 +225,7 @@ private fun DailyList(
     transactionList: List<Transaction>,
     onItemClick: (Transaction) -> Unit,
     contentPadding: PaddingValues,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
     val grouped = transactionList.groupBy { transaction ->
@@ -341,7 +351,9 @@ fun CalendarView(
     transactionList: List<Transaction>,
     year: Int,
     month: Int,
-    startDayOfWeek: StartDayOfWeek = StartDayOfWeek.Sunday
+    startDayOfWeek: StartDayOfWeek = StartDayOfWeek.Sunday,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
@@ -385,81 +397,52 @@ fun CalendarView(
         }
     }
 
-    LazyVerticalGrid(columns = GridCells.Fixed(7)) {
-        items(days.size) { index ->
-            val (day, date) = days[index]
+    Column(
+        modifier = modifier
+            .padding(top = 160.dp),
+    ) {
+        Text(
+            text = (year%2000).toString() + stringResource(R.string.year) + " "
+                    + month.toString() + stringResource(R.string.month),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .padding(dimensionResource(id = R.dimen.padding_small))
+        )
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(7),
+        ) {
+            items(days.size) { index ->
+                val (day, date) = days[index]
 
-            val (expense, income) = if (date != null) {
-                totals[date] ?: (null to null)
-            } else (null to null)
+                val (expense, income) = if (date != null) {
+                    totals[date] ?: (null to null)
+                } else (null to null)
 
-            // 색상 계산
-            val dayColor = if (day != null && date != null) {
-                when (startDayOfWeek) {
-                    StartDayOfWeek.Sunday -> when (date.dayOfWeek) {
-                        DayOfWeek.SUNDAY -> Color.Red
-                        DayOfWeek.SATURDAY -> Color.Blue
-                        else -> Color.Black
+                // 색상 계산
+                val dayColor = if (day != null && date != null) {
+                    when (startDayOfWeek) {
+                        StartDayOfWeek.Sunday -> when (date.dayOfWeek) {
+                            DayOfWeek.SUNDAY -> Color.Red
+                            DayOfWeek.SATURDAY -> Color.Blue
+                            else -> Color.Black
+                        }
+                        StartDayOfWeek.Monday -> when (date.dayOfWeek) {
+                            DayOfWeek.SATURDAY -> Color.Blue
+                            DayOfWeek.SUNDAY -> Color.Red
+                            else -> Color.Black
+                        }
                     }
-                    StartDayOfWeek.Monday -> when (date.dayOfWeek) {
-                        DayOfWeek.SATURDAY -> Color.Blue
-                        DayOfWeek.SUNDAY -> Color.Red
-                        else -> Color.Black
-                    }
-                }
-            } else null
+                } else null
 
-            CalendarItem(
-                day = day,
-                dayColor = dayColor,
-                income = income,
-                expense = expense
-            )
+                CalendarItem(
+                    day = day,
+                    dayColor = dayColor,
+                    income = income,
+                    expense = expense
+                )
+            }
         }
     }
-
-//    val days: List<Pair<Int?, Int?>> = (0 until rows * 7).map { index ->
-//        val dayNumber = index - startDayIndex + 1
-//        if (dayNumber in 1..lastDayOfMonth.dayOfMonth) {
-//            val date = LocalDate.of(year, month, dayNumber)
-//            val gridIndex = when (startDayOfWeek) {
-//                StartDayOfWeek.Sunday -> date.dayOfWeek.value % 7
-//                StartDayOfWeek.Monday -> date.dayOfWeek.value - 1
-//            }
-//            dayNumber to gridIndex
-//        } else {
-//            null to null
-//        }
-//    }
-
-//    LazyVerticalGrid(columns = GridCells.Fixed(7)) {
-//        items(days.size) { index ->
-//            val (day, gridIndex) = days[index]
-//
-//            // 열 위치에 따른 색상 지정
-//            val dayColor = if (day != null && gridIndex != null) {
-//                when (startDayOfWeek) {
-//                    StartDayOfWeek.Sunday -> when (gridIndex) {
-//                        0 -> Color.Red   // 일요일
-//                        6 -> Color.Blue  // 토요일
-//                        else -> Color.Black
-//                    }
-//                    StartDayOfWeek.Monday -> when (gridIndex) {
-//                        5 -> Color.Blue  // 토요일
-//                        6 -> Color.Red   // 일요일
-//                        else -> Color.Black
-//                    }
-//                }
-//            } else null
-//
-//            CalendarItem(
-//                day = day,
-//                dayColor = dayColor,
-//                income = null,
-//                expense = null
-//            )
-//        }
-//    }
 
 }
 
@@ -474,8 +457,9 @@ private fun CalendarItem(
     Box(
         modifier = Modifier
             .border(1.dp, Color.LightGray)
-            .size(width = 60.dp, height = 70.dp) // 지워야 함 나중에...
-            .padding(3.dp)
+            .fillMaxWidth()
+            .height(80.dp)
+            .padding(2.dp)
     ) {
         // 좌측 상단 날짜 표시
         if (day != null && dayColor != null) {
@@ -490,10 +474,10 @@ private fun CalendarItem(
         // 우측 하단 금액 표시
         Column(
             modifier = Modifier.align(Alignment.BottomEnd),
-            horizontalAlignment = Alignment.End
+            horizontalAlignment = Alignment.End,
         ) {
             if (!expense.isNullOrEmpty()) {
-                val fontSize = if (expense.length > 10) 6.sp else 12.sp
+                val fontSize = if (expense.length > 10) 5.sp else 9.sp
                 Text(
                     text = expense,
                     color = Color.Blue,
@@ -503,7 +487,7 @@ private fun CalendarItem(
                 )
             }
             if (!income.isNullOrEmpty()) {
-                val fontSize = if (income.length > 10) 6.sp else 12.sp
+                val fontSize = if (income.length > 10) 5.sp else 9.sp
                 Text(
                     text = income,
                     color = Color.Red,
