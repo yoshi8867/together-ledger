@@ -475,22 +475,23 @@ private fun CalendarItem(
         Column(
             modifier = Modifier.align(Alignment.BottomEnd),
             horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy((-7).dp),
         ) {
-            if (!expense.isNullOrEmpty()) {
-                val fontSize = if (expense.length > 10) 5.sp else 9.sp
-                Text(
-                    text = expense,
-                    color = Color.Blue,
-                    fontSize = fontSize,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
             if (!income.isNullOrEmpty()) {
                 val fontSize = if (income.length > 10) 5.sp else 9.sp
                 Text(
                     text = income,
                     color = Color.Red,
+                    fontSize = fontSize,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (!expense.isNullOrEmpty()) {
+                val fontSize = if (expense.length > 10) 5.sp else 9.sp
+                Text(
+                    text = expense,
+                    color = Color.Blue,
                     fontSize = fontSize,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -698,12 +699,12 @@ fun TestPreview() {
         ),
         Transaction(
             id = 5,
-            category = "💇‍♀️미용",
-            content = "헤어컷",
+            category = "부수입",
+            content = "방과후 수입",
             timeStamp = "2026-02-04 14:20:00",
-            amount = 25000,
+            amount = 75000,
             assetType = "국민카드",
-            isIncome = false,
+            isIncome = true,
         ),
         Transaction(
             id = 6,
