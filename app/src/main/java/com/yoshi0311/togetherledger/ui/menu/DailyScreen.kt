@@ -1,7 +1,9 @@
 package com.yoshi0311.togetherledger.ui.menu
 
 import android.os.Build
+import android.widget.CalendarView
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +17,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -48,6 +53,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,9 +66,12 @@ import com.yoshi0311.togetherledger.ui.AppViewModelProvider
 import com.yoshi0311.togetherledger.ui.navigation.NavigationDestination
 import com.yoshi0311.togetherledger.ui.theme.TogetherLedgerTheme
 import java.text.NumberFormat
+import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.ceil
 
 object DailyDestination : NavigationDestination {
     override val route = "daily"
@@ -314,6 +323,201 @@ private fun DailyItem(
 }
 
 @Composable
+private fun CalendarList(
+    transactionList: List<Transaction>,
+    onItemClick: (Transaction) -> Unit,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+) {
+
+}
+
+enum class StartDayOfWeek {
+    Sunday, Monday
+}
+
+@Composable
+fun CalendarView(
+    transactionList: List<Transaction>,
+    year: Int,
+    month: Int,
+    startDayOfWeek: StartDayOfWeek = StartDayOfWeek.Sunday
+) {
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+
+    // 날짜별 그룹핑
+    val grouped = transactionList.groupBy { transaction ->
+        LocalDateTime.parse(transaction.timeStamp, formatter).toLocalDate()
+    }
+
+    // 날짜별 합산 문자열 맵
+    val totals: Map<LocalDate, Pair<String?, String?>> = grouped.mapValues { (_, transactions) ->
+        val incomeTotal = transactions.filter { it.isIncome }.sumOf { it.amount }
+        val expenseTotal = transactions.filter { !it.isIncome }.sumOf { it.amount }
+
+        val incomeTotalString = if (incomeTotal > 0)
+            NumberFormat.getNumberInstance(Locale.KOREA).format(incomeTotal) else null
+        val expenseTotalString = if (expenseTotal > 0)
+            NumberFormat.getNumberInstance(Locale.KOREA).format(expenseTotal) else null
+
+        expenseTotalString to incomeTotalString
+    }
+
+    val firstDayOfMonth = LocalDate.of(year, month, 1)
+    val lastDayOfMonth = firstDayOfMonth.withDayOfMonth(firstDayOfMonth.lengthOfMonth())
+
+    // 시작 요일 인덱스 계산
+    val startDayIndex = when (startDayOfWeek) {
+        StartDayOfWeek.Sunday -> firstDayOfMonth.dayOfWeek.value % 7 // Sunday=0
+        StartDayOfWeek.Monday -> firstDayOfMonth.dayOfWeek.value - 1 // Monday=0
+    }
+
+    val totalCells = startDayIndex + lastDayOfMonth.dayOfMonth
+    val rows = ceil(totalCells / 7.0).toInt()
+
+    val days: List<Pair<Int?, LocalDate?>> = (0 until rows * 7).map { index ->
+        val dayNumber = index - startDayIndex + 1
+        if (dayNumber in 1..lastDayOfMonth.dayOfMonth) {
+            val date = LocalDate.of(year, month, dayNumber)
+            dayNumber to date
+        } else {
+            null to null
+        }
+    }
+
+    LazyVerticalGrid(columns = GridCells.Fixed(7)) {
+        items(days.size) { index ->
+            val (day, date) = days[index]
+
+            val (expense, income) = if (date != null) {
+                totals[date] ?: (null to null)
+            } else (null to null)
+
+            // 색상 계산
+            val dayColor = if (day != null && date != null) {
+                when (startDayOfWeek) {
+                    StartDayOfWeek.Sunday -> when (date.dayOfWeek) {
+                        DayOfWeek.SUNDAY -> Color.Red
+                        DayOfWeek.SATURDAY -> Color.Blue
+                        else -> Color.Black
+                    }
+                    StartDayOfWeek.Monday -> when (date.dayOfWeek) {
+                        DayOfWeek.SATURDAY -> Color.Blue
+                        DayOfWeek.SUNDAY -> Color.Red
+                        else -> Color.Black
+                    }
+                }
+            } else null
+
+            CalendarItem(
+                day = day,
+                dayColor = dayColor,
+                income = income,
+                expense = expense
+            )
+        }
+    }
+
+//    val days: List<Pair<Int?, Int?>> = (0 until rows * 7).map { index ->
+//        val dayNumber = index - startDayIndex + 1
+//        if (dayNumber in 1..lastDayOfMonth.dayOfMonth) {
+//            val date = LocalDate.of(year, month, dayNumber)
+//            val gridIndex = when (startDayOfWeek) {
+//                StartDayOfWeek.Sunday -> date.dayOfWeek.value % 7
+//                StartDayOfWeek.Monday -> date.dayOfWeek.value - 1
+//            }
+//            dayNumber to gridIndex
+//        } else {
+//            null to null
+//        }
+//    }
+
+//    LazyVerticalGrid(columns = GridCells.Fixed(7)) {
+//        items(days.size) { index ->
+//            val (day, gridIndex) = days[index]
+//
+//            // 열 위치에 따른 색상 지정
+//            val dayColor = if (day != null && gridIndex != null) {
+//                when (startDayOfWeek) {
+//                    StartDayOfWeek.Sunday -> when (gridIndex) {
+//                        0 -> Color.Red   // 일요일
+//                        6 -> Color.Blue  // 토요일
+//                        else -> Color.Black
+//                    }
+//                    StartDayOfWeek.Monday -> when (gridIndex) {
+//                        5 -> Color.Blue  // 토요일
+//                        6 -> Color.Red   // 일요일
+//                        else -> Color.Black
+//                    }
+//                }
+//            } else null
+//
+//            CalendarItem(
+//                day = day,
+//                dayColor = dayColor,
+//                income = null,
+//                expense = null
+//            )
+//        }
+//    }
+
+}
+
+
+@Composable
+private fun CalendarItem(
+    day: Int?,       // 날짜 (빈 셀일 경우 null)
+    dayColor: Color? = null,       // 날짜 색상
+    income: String? = null,        // 수입 합산
+    expense: String? = null,       // 지출 합산
+) {
+    Box(
+        modifier = Modifier
+            .border(1.dp, Color.LightGray)
+            .size(width = 60.dp, height = 70.dp) // 지워야 함 나중에...
+            .padding(3.dp)
+    ) {
+        // 좌측 상단 날짜 표시
+        if (day != null && dayColor != null) {
+            Text(
+                text = day.toString(),
+                color = dayColor,
+                fontSize = 12.sp,
+                modifier = Modifier.align(Alignment.TopStart)
+            )
+        }
+
+        // 우측 하단 금액 표시
+        Column(
+            modifier = Modifier.align(Alignment.BottomEnd),
+            horizontalAlignment = Alignment.End
+        ) {
+            if (!expense.isNullOrEmpty()) {
+                val fontSize = if (expense.length > 10) 6.sp else 12.sp
+                Text(
+                    text = expense,
+                    color = Color.Blue,
+                    fontSize = fontSize,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (!income.isNullOrEmpty()) {
+                val fontSize = if (income.length > 10) 6.sp else 12.sp
+                Text(
+                    text = income,
+                    color = Color.Red,
+                    fontSize = fontSize,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+
+}
+
+@Composable
 fun SelectMonthButton(
     modifier: Modifier = Modifier,
     listUiState: ListUiState,
@@ -471,8 +675,107 @@ fun MonthPicker(
 @Preview(showBackground = true)
 @Composable
 fun TestPreview() {
+    val list: List<Transaction> = listOf(
+        Transaction(
+            id = 1,
+            category = "🍔식비",
+            content = "마켓컬리 주문",
+            timeStamp = "2026-02-02 15:42:00",
+            amount = 15800,
+            assetType = "국민은행",
+            isIncome = false,
+        ),
+        Transaction(
+            id = 2,
+            category = "🍪간식비",
+            content = "CU편의점",
+            timeStamp = "2026-02-03 12:15:00",
+            amount = 4200,
+            assetType = "하나카드",
+            isIncome = false,
+        ),
+        Transaction(
+            id = 3,
+            category = "🍟간식비",
+            content = "명랑핫도그",
+            timeStamp = "2026-02-03 17:50:15",
+            amount = 3800,
+            assetType = "국민은행",
+            isIncome = false,
+        ),
+        Transaction(
+            id = 4,
+            category = "🚌교통비",
+            content = "기후동행 충전",
+            timeStamp = "2026-02-04 09:42:00",
+            amount = 55000,
+            assetType = "카카오뱅크",
+            isIncome = false,
+        ),
+        Transaction(
+            id = 5,
+            category = "💇‍♀️미용",
+            content = "헤어컷",
+            timeStamp = "2026-02-04 14:20:00",
+            amount = 25000,
+            assetType = "국민카드",
+            isIncome = false,
+        ),
+        Transaction(
+            id = 6,
+            category = "💡공과금",
+            content = "전기요금 납부",
+            timeStamp = "2026-02-04 20:05:00",
+            amount = 72000,
+            assetType = "우리카드",
+            isIncome = false,
+        ),
+        Transaction(
+            id = 7,
+            category = "🍷데이트",
+            content = "레스토랑 저녁식사",
+            timeStamp = "2026-02-06 19:30:00",
+            amount = 68000,
+            assetType = "현금",
+            isIncome = false,
+        ),
+        Transaction(
+            id = 8,
+            category = "💼업무",
+            content = "카페 회의",
+            timeStamp = "2026-02-07 10:45:00",
+            amount = 12000,
+            assetType = "하나카드",
+            isIncome = false,
+        ),
+        Transaction(
+            id = 9,
+            category = "🍔식비",
+            content = "점심 도시락",
+            timeStamp = "2026-02-07 13:10:00",
+            amount = 8500,
+            assetType = "국민은행",
+            isIncome = false,
+        ),
+    )
+
+    val incomeTotal = list.filter { it.isIncome }.sumOf { it.amount }
+    val expenseTotal = list.filter { !it.isIncome }.sumOf { it.amount }
+    val incomeTotalString = "${NumberFormat.getNumberInstance(Locale.KOREA).format(incomeTotal)}"
+    val expenseTotalString = "${NumberFormat.getNumberInstance(Locale.KOREA).format(expenseTotal)}"
     TogetherLedgerTheme {
-        // MonthPicker()
+//        CalendarItem(
+//            day = 5,
+//            dayOfWeek = 3,
+//            income = if (incomeTotal > 0) incomeTotalString else null,
+//            expense = if (expenseTotal > 0) expenseTotalString else null,
+//        )
+        CalendarView(
+            transactionList = list,
+            year = 2026,
+            month = 2,
+            startDayOfWeek = StartDayOfWeek.Monday,
+        )
     }
 }
 
