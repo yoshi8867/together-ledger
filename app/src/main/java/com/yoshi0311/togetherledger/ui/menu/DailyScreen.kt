@@ -194,6 +194,7 @@ private fun DailyBody(
                     month = listUiState.selectedMonth,
                     startDayOfWeek = StartDayOfWeek.Sunday, // TODO: 사용자가 직접 설정하도록 변경할 것
                     modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.padding_small)),
+                    onItemClick = { onItemClick(it) },
                 )
             }
             ScreenType.STATISTICS -> {
@@ -265,7 +266,7 @@ private fun DailyList(
                 DailyItem(
                     transaction = transaction,
                     modifier = Modifier
-                        .padding(dimensionResource(id = R.dimen.padding_small))
+                        .padding(dimensionResource(id = R.dimen.padding_extra_small))
                         .clickable { onItemClick(transaction) }
                 )
             }
@@ -287,14 +288,14 @@ private fun DailyItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // 좌측: 분류
             Text(
                 text = transaction.category,
                 modifier = Modifier.weight(2f), // 좌측 정렬
-                fontSize = 14.sp
+                fontSize = 12.sp
             )
 
             // 중앙: 내용 + 시각
@@ -304,12 +305,11 @@ private fun DailyItem(
             ) {
                 Text(
                     text = transaction.content,
-                    fontSize = 16.sp
+                    fontSize = 12.sp
                 )
                 Text(
-//                    text = dateTime.format(DateTimeFormatter.ofPattern("a hh:mm:ss")),
                     text = transaction.timeStamp,
-                    fontSize = 12.sp,
+                    fontSize = 10.sp,
                     color = Color.Gray
                 )
             }
@@ -324,22 +324,12 @@ private fun DailyItem(
                 Text(
                     // text = "${item.amount}원",
                     text = "${NumberFormat.getNumberInstance(Locale.KOREA).format(transaction.amount)}원",
-                    fontSize = 16.sp,
+                    fontSize = 13.sp,
                     color = if (transaction.isIncome) Color.Red else Color.Blue
                 )
             }
         }
     }
-}
-
-@Composable
-private fun CalendarList(
-    transactionList: List<Transaction>,
-    onItemClick: (Transaction) -> Unit,
-    contentPadding: PaddingValues,
-    modifier: Modifier = Modifier,
-) {
-
 }
 
 enum class StartDayOfWeek {
@@ -354,6 +344,7 @@ fun CalendarView(
     startDayOfWeek: StartDayOfWeek = StartDayOfWeek.Sunday,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    onItemClick: (Int) -> Unit,
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.getDefault())
 
@@ -442,6 +433,12 @@ fun CalendarView(
                 )
             }
         }
+        DailyList(
+            transactionList = transactionList,
+            onItemClick = { onItemClick(it.id) },
+            contentPadding = contentPadding,
+            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.padding_small)),
+        )
     }
 
 }
@@ -458,7 +455,7 @@ private fun CalendarItem(
         modifier = Modifier
             .border(1.dp, Color.LightGray)
             .fillMaxWidth()
-            .height(80.dp)
+            .height(75.dp)
             .padding(2.dp)
     ) {
         // 좌측 상단 날짜 표시
@@ -755,12 +752,12 @@ fun TestPreview() {
 //            income = if (incomeTotal > 0) incomeTotalString else null,
 //            expense = if (expenseTotal > 0) expenseTotalString else null,
 //        )
-        CalendarView(
-            transactionList = list,
-            year = 2026,
-            month = 2,
-            startDayOfWeek = StartDayOfWeek.Monday,
-        )
+//        CalendarView(
+//            transactionList = list,
+//            year = 2026,
+//            month = 2,
+//            startDayOfWeek = StartDayOfWeek.Monday,
+//        )
     }
 }
 
