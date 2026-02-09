@@ -227,7 +227,7 @@ private fun DailyList(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
-    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.getDefault())
     val grouped = transactionList.groupBy { transaction ->
         // String → LocalDateTime → LocalDate
         val dateTime = LocalDateTime.parse(transaction.timeStamp, formatter)
@@ -355,7 +355,7 @@ fun CalendarView(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.getDefault())
 
     // 날짜별 그룹핑
     val grouped = transactionList.groupBy { transaction ->
