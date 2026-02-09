@@ -26,6 +26,8 @@
     <string name="save_action">저장</string>
     <string name="transaction_category_req">구분</string>
     <string name="transaction_timestamp_req">*시각 yyyy-MM-dd HH:mm:ss</string>
+    <string name="transaction_timestamp_date_req">*날짜</string>
+    <string name="transaction_timestamp_time_req">*시각</string>
     <string name="transaction_content_req">*내용</string>
     <string name="transaction_amount_req">*금액</string>
     <string name="transaction_asset_type_req">자산</string>

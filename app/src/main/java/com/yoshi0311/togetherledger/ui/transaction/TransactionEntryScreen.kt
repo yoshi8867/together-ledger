@@ -1,4 +1,5 @@
 package com.yoshi0311.togetherledger.ui.transaction
+import android.app.DatePickerDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -45,6 +47,8 @@ import com.yoshi0311.togetherledger.ui.AppViewModelProvider
 import com.yoshi0311.togetherledger.ui.navigation.NavigationDestination
 import com.yoshi0311.togetherledger.ui.theme.TogetherLedgerTheme
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Currency
 import java.util.Locale
 
@@ -186,6 +190,71 @@ fun TransactionInputForm(
             enabled = enabled,
             singleLine = true
         )
+
+        val context = LocalContext.current
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp) // 간격 조절
+        ) {
+            OutlinedTextField(
+                value = transactionDetails.timeStamp.takeIf { it.isNotBlank() }
+                    ?.substringBefore(" ") ?: "",
+                onValueChange = { newDate ->
+                    // 기존 timeStamp에서 시간 부분을 유지하고 날짜만 교체
+                    val currentTime = transactionDetails.timeStamp.substringAfter(" ", "")
+                    val updated = if (currentTime.isNotBlank()) "$newDate $currentTime" else newDate
+                    onValueChange(transactionDetails.copy(timeStamp = updated))
+                },
+                label = { Text(stringResource(R.string.transaction_timestamp_date_req)) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(enabled) {
+                        // DatePickerDialog 호출
+                        val now = LocalDate.now()
+                        DatePickerDialog(
+                            context,
+                            { _, year, month, dayOfMonth ->
+                                val pickedDate = LocalDate.of(year, month + 1, dayOfMonth)
+                                val currentTime =
+                                    transactionDetails.timeStamp.substringAfter(" ", "")
+                                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                                val updatedDate = pickedDate.format(formatter)
+                                val updated =
+                                    if (currentTime.isNotBlank()) "$updatedDate $currentTime" else updatedDate
+                                onValueChange(transactionDetails.copy(timeStamp = updated))
+                            },
+                            now.year, now.monthValue - 1, now.dayOfMonth
+                        ).show()
+                    },
+                enabled = enabled,
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = transactionDetails.timeStamp.takeIf { it.isNotBlank() }
+                    ?.substringAfter(" ") ?: "",
+                onValueChange = { newTime ->
+                    // 기존 timeStamp에서 날짜 부분을 유지하고 시간만 교체
+                    val currentDate = transactionDetails.timeStamp.substringBefore(" ", "")
+                    val updated = if (currentDate.isNotBlank()) "$currentDate $newTime" else newTime
+                    onValueChange(transactionDetails.copy(timeStamp = updated))
+                },
+                label = { Text(stringResource(R.string.transaction_timestamp_time_req)) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                ),
+                modifier = Modifier.weight(1f),
+                enabled = enabled,
+                singleLine = true
+            )
+        }
 
         OutlinedTextField(
             value = transactionDetails.amount,
