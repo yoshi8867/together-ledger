@@ -1,5 +1,6 @@
 package com.yoshi0311.togetherledger.ui.menu
 
+import android.R.attr.onClick
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
@@ -49,7 +50,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
@@ -154,6 +157,7 @@ fun DailyScreen(
                         end = WindowInsets.safeDrawing.asPaddingValues()
                             .calculateEndPadding(LocalLayoutDirection.current)
                     )
+                    .alpha(0.95f) // 여기서 반투명 처리
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -195,6 +199,7 @@ private fun DailyBody(
                     startDayOfWeek = StartDayOfWeek.Sunday, // TODO: 사용자가 직접 설정하도록 변경할 것
                     modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.padding_small)),
                     onItemClick = { onItemClick(it) },
+                    contentPadding = contentPadding,
                 )
             }
             ScreenType.STATISTICS -> {
@@ -343,7 +348,7 @@ fun CalendarView(
     month: Int,
     startDayOfWeek: StartDayOfWeek = StartDayOfWeek.Sunday,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    contentPadding: PaddingValues,
     onItemClick: (Int) -> Unit,
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.getDefault())
@@ -388,6 +393,8 @@ fun CalendarView(
         }
     }
 
+    var selectedDay by remember { mutableStateOf<Int?>(null) }
+
     Column(
         modifier = modifier
             .padding(top = 160.dp),
@@ -429,15 +436,29 @@ fun CalendarView(
                     day = day,
                     dayColor = dayColor,
                     income = income,
-                    expense = expense
+                    expense = expense,
+                    onClick = {
+                        selectedDay = day
+                    }
                 )
             }
         }
         DailyList(
-            transactionList = transactionList,
+            transactionList = if (selectedDay == null) {
+                emptyList<Transaction>()
+            } else {
+                    transactionList.filter { transaction ->
+                        val dayPart = transaction.timeStamp.substring(8, 10)
+                        dayPart.toIntOrNull() == selectedDay
+                    }
+            },
             onItemClick = { onItemClick(it.id) },
-            contentPadding = contentPadding,
-            modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.padding_small)),
+            contentPadding = PaddingValues(0.dp),
+            modifier = Modifier.padding(
+                start = dimensionResource(id = R.dimen.padding_small),
+                end = dimensionResource(id = R.dimen.padding_small),
+                bottom = 100.dp
+            ),
         )
     }
 
@@ -450,6 +471,7 @@ private fun CalendarItem(
     dayColor: Color? = null,       // 날짜 색상
     income: String? = null,        // 수입 합산
     expense: String? = null,       // 지출 합산
+    onClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -457,6 +479,9 @@ private fun CalendarItem(
             .fillMaxWidth()
             .height(75.dp)
             .padding(2.dp)
+            .clickable {
+                onClick()
+            }
     ) {
         // 좌측 상단 날짜 표시
         if (day != null && dayColor != null) {
@@ -512,7 +537,7 @@ fun SelectMonthButton(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 30.dp, ),
+                .padding(vertical = 2.dp, horizontal = 30.dp, ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Button(
@@ -542,7 +567,7 @@ fun SelectMonthButton(
                 Text(
                     text = listUiState.selectedYear.toString() + stringResource(R.string.year)
                             + listUiState.selectedMonth.toString() + stringResource(R.string.month),
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                 )
             }
             Button(
