@@ -1,8 +1,6 @@
 package com.yoshi0311.togetherledger.ui.transaction
 
 import android.R.attr.category
-import android.R.attr.name
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -81,7 +79,7 @@ data class TransactionUiState(
 
 data class TransactionDetails(
     val id: Int = 0,
-    val category: String = "",
+    val categoryName: String = "",
     val categoryId: Int = 0,
     val content: String = "",
     val timeStamp: String = "",
@@ -100,6 +98,17 @@ fun TransactionDetails.toTransaction(): Transaction = Transaction(
     isIncome = isIncome,
 )
 
+fun TransactionDetails.toTransactionInfo(): TransactionInfo = TransactionInfo(
+    id = id,
+    categoryId = categoryId,
+    categoryName = categoryName,
+    content = content,
+    timeStamp = timeStamp,
+    amount = amount.toIntOrNull() ?: 0,
+    assetType = assetType,
+    isIncome = isIncome,
+)
+
 fun TransactionInfo.toTransactionUiState(isEntryValid: Boolean = false): TransactionUiState = TransactionUiState(
     transactionDetails = this.toTransactionDetails(),
     isEntryValid = isEntryValid
@@ -107,7 +116,8 @@ fun TransactionInfo.toTransactionUiState(isEntryValid: Boolean = false): Transac
 
 fun TransactionInfo.toTransactionDetails(): TransactionDetails = TransactionDetails(
     id = id,
-    category = category.toString(),
+    categoryName = categoryName,
+    categoryId = categoryId,
     content = content,
     timeStamp = timeStamp,
     amount = amount.toString(),

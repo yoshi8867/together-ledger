@@ -12,7 +12,7 @@ import java.time.LocalDateTime
 @Dao
 interface TransactionDao {
     @Query("""
-        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome,
+        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId, 
                c.name AS categoryName
         FROM transactions AS t
         INNER JOIN categories AS c ON t.categoryId = c.id
@@ -21,7 +21,7 @@ interface TransactionDao {
     fun getAllTransactions(): Flow<List<TransactionInfo>>
 
     @Query("""
-        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome,
+        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId, 
                c.name AS categoryName
         FROM transactions AS t
         INNER JOIN categories AS c ON t.categoryId = c.id
@@ -30,7 +30,7 @@ interface TransactionDao {
     fun getTransaction(id: Int): Flow<TransactionInfo>
 
     @Query("""
-        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome,
+        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId, 
                c.name AS categoryName
         FROM transactions AS t
         INNER JOIN categories AS c ON t.categoryId = c.id

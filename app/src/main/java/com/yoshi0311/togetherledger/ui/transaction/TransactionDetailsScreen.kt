@@ -39,10 +39,9 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import com.yoshi0311.togetherledger.LedgerTopAppBar
 import com.yoshi0311.togetherledger.R
-import com.yoshi0311.togetherledger.data.Transaction
+import com.yoshi0311.togetherledger.data.TransactionInfo
 import com.yoshi0311.togetherledger.ui.AppViewModelProvider
 import com.yoshi0311.togetherledger.ui.navigation.NavigationDestination
 import kotlinx.coroutines.launch
@@ -126,7 +125,7 @@ private fun ItemDetailsBody(
     ) {
         var deleteConfirmationRequired by rememberSaveable { mutableStateOf(false) }
         TransactionDetails(
-            transaction = transactionDetailsUiState.transactionDetails.toTransaction(),
+            transactionInfo = transactionDetailsUiState.transactionDetails.toTransactionInfo(),
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedButton(
@@ -151,7 +150,7 @@ private fun ItemDetailsBody(
 
 @Composable
 fun TransactionDetails(
-    transaction: Transaction, modifier: Modifier = Modifier
+    transactionInfo: TransactionInfo, modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier, colors = CardDefaults.cardColors(
@@ -168,38 +167,38 @@ fun TransactionDetails(
 
             DetailsRow(
                 labelResID = R.string.transaction_category,
-                detail = transaction.categoryId.toString(),
+                detail = transactionInfo.categoryName,
                 modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen
                             .padding_medium))
             )
             DetailsRow(
                 labelResID = R.string.transaction_content,
-                detail = transaction.content,
+                detail = transactionInfo.content,
                 modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen
                     .padding_medium))
             )
             DetailsRow(
                 labelResID = R.string.transaction_timestamp,
-                detail = transaction.timeStamp,
+                detail = transactionInfo.timeStamp,
                 modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen
                     .padding_medium))
             )
 
             DetailsRow(
                 labelResID = R.string.transaction_amount,
-                detail = transaction.amount.toString(),
+                detail = transactionInfo.amount.toString(),
                 modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen
                     .padding_medium))
             )
             DetailsRow(
                 labelResID = R.string.transaction_asset_type,
-                detail = transaction.assetType,
+                detail = transactionInfo.assetType,
                 modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen
                     .padding_medium))
             )
             DetailsRow(
                 labelResID = R.string.transaction_is_income,
-                detail = if (transaction.isIncome) "수입" else "지출",
+                detail = if (transactionInfo.isIncome) "수입" else "지출",
                 modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen
                     .padding_medium))
             )

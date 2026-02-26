@@ -88,6 +88,9 @@ import java.util.Currency
 import java.util.Date
 import java.util.Locale
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.collectAsState
 
 object TransactionEntryDestination : NavigationDestination {
@@ -124,6 +127,9 @@ fun TransactionEntryScreen(
                 }
             },
             categories = categories,
+            onAddCategory = { name -> viewModel.addCategory(name, isIncome = false) },
+            onDeleteCategory = viewModel::deleteCategory,
+            onUpdateCategory = viewModel::updateCategory,
             modifier = Modifier
                 .padding(
                     start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
@@ -143,6 +149,9 @@ fun TransactionEntryBody(
     onSaveClick: () -> Unit,
     modifier: Modifier = Modifier,
     categories: List<Category>,
+    onAddCategory: (String) -> Unit,
+    onDeleteCategory: (Category) -> Unit,
+    onUpdateCategory: (Category, String) -> Unit,
 ) {
     Column(
         modifier = modifier
@@ -154,6 +163,9 @@ fun TransactionEntryBody(
             onValueChange = onTransactionValueChange,
             modifier = Modifier.fillMaxWidth(),
             categories = categories,
+            onAddCategory = onAddCategory,
+            onDeleteCategory = onDeleteCategory,
+            onUpdateCategory = onUpdateCategory,
         )
         Button(
             onClick = onSaveClick,
@@ -174,6 +186,9 @@ fun TransactionInputForm(
     onValueChange: (TransactionDetails) -> Unit = {},
     enabled: Boolean = true,
     categories: List<Category>,
+    onAddCategory: (String) -> Unit,
+    onDeleteCategory: (Category) -> Unit,
+    onUpdateCategory: (Category, String) -> Unit,
 ) {
     Column(
         modifier = modifier,
@@ -393,12 +408,15 @@ fun TransactionInputForm(
 
         CategoryComboBox(
             categories = categories,
-            selected = transactionDetails.category,
+            selectedCategoryId = transactionDetails.categoryId,
             onSelected = {
                 onValueChange(transactionDetails.copy(categoryId = it))
             },
             fieldName = stringResource(R.string.transaction_category_req),
             enabled = true,
+            onAdd = onAddCategory,
+            onDelete = onDeleteCategory,
+            onUpdate = onUpdateCategory,
         )
 
         // 자산 구분은 추후 업데이트 하는 것으로...
@@ -495,13 +513,17 @@ fun TimePickerDialog(
 @Composable
 fun CategoryComboBox(
     categories: List<Category>,
-    selected: String,
+    selectedCategoryId: Int?,
     onSelected: (Int) -> Unit,
     fieldName: String,
     enabled: Boolean,
+    onAdd: (String) -> Unit,
+    onDelete: (Category) -> Unit,
+    onUpdate: (Category, String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var showEditSheet by remember { mutableStateOf(false) }
+    val selectedCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: "카테고리 선택"
 
     Column {
         Row(
@@ -515,7 +537,7 @@ fun CategoryComboBox(
                 modifier = Modifier.weight(1f),
             ) {
                 OutlinedTextField(
-                    value = selected,
+                    value = selectedCategoryName,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text(fieldName) },
@@ -561,9 +583,9 @@ fun CategoryComboBox(
         CategoryManagementSheet(
             categories = categories,
             onDismiss = { showEditSheet = false },
-            onAdd = { /* ViewModel 연결 예정 */ },
-            onDelete = { /* ViewModel 연결 예정 */ },
-            onUpdate = { _, _ -> /* ViewModel 연결 예정 */ }
+            onAdd = onAdd,
+            onDelete = onDelete,
+            onUpdate = onUpdate,
         )
     }
 }
@@ -577,62 +599,148 @@ fun CategoryManagementSheet(
     onDelete: (Category) -> Unit,
     onUpdate: (Category, String) -> Unit
 ) {
+    // 삭제 확인 다이얼로그를 위한 상태
+    var categoryToDelete by remember { mutableStateOf<Category?>(null) }
+
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
                 .navigationBarsPadding()
         ) {
             Text("카테고리 편집", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 새 카테고리 추가 입력창
+            // 1. 새 카테고리 추가 입력창
             var newCategoryName by remember { mutableStateOf("") }
             OutlinedTextField(
                 value = newCategoryName,
                 onValueChange = { newCategoryName = it },
                 label = { Text("새 카테고리 추가") },
                 modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
                 trailingIcon = {
-                    IconButton(onClick = {
-                        if(newCategoryName.isNotBlank()) {
-                            onAdd(newCategoryName)
-                            newCategoryName = ""
-                        }
-                    }) {
-                        Icon(Icons.Default.Add, contentDescription = null)
+                    IconButton(
+                        onClick = {
+                            if (newCategoryName.isNotBlank()) {
+                                onAdd(newCategoryName.trim())
+                                newCategoryName = ""
+                            }
+                        },
+                        enabled = newCategoryName.isNotBlank()
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "추가")
                     }
                 }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            // 카테고리 리스트
-            LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
-                items(categories) { category ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(category.name, modifier = Modifier.weight(1f))
-                        IconButton(onClick = { /* 수정 로직 */ }) {
-                            Icon(Icons.Default.Edit, contentDescription = null)
-                        }
-                        IconButton(onClick = { onDelete(category) }) {
-                            Icon(Icons.Default.Delete, contentDescription = null)
-                        }
-                    }
+            // 2. 카테고리 리스트 (인라인 편집 적용)
+            LazyColumn(modifier = Modifier.weight(1f, fill = false).heightIn(max = 300.dp)) {
+                items(
+                    items = categories,
+                    key = { it.id } // DB ID를 키로 사용하여 성능 최적화
+                ) { category ->
+                    CategoryItemRow(
+                        category = category,
+                        onDeleteClick = { categoryToDelete = category },
+                        onUpdate = onUpdate
+                    )
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
             Button(
                 onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text("닫기")
             }
         }
     }
+
+    // 3. 삭제 확인 다이얼로그
+    if (categoryToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { categoryToDelete = null },
+            title = { Text("카테고리 삭제") },
+            text = { Text("'${categoryToDelete?.name}' 카테고리를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    categoryToDelete?.let { onDelete(it) }
+                    categoryToDelete = null
+                }) {
+                    Text("삭제", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { categoryToDelete = null }) {
+                    Text("취소")
+                }
+            }
+        )
+    }
 }
 
+@Composable
+fun CategoryItemRow(
+    category: Category,
+    onDeleteClick: () -> Unit,
+    onUpdate: (Category, String) -> Unit
+) {
+    var isEditing by remember { mutableStateOf(false) }
+    var editName by remember { mutableStateOf(category.name) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (isEditing) {
+            // [수정 모드]
+            OutlinedTextField(
+                value = editName,
+                onValueChange = { editName = it },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                trailingIcon = {
+                    Row {
+                        IconButton(onClick = {
+                            if (editName.isNotBlank() && editName != category.name) {
+                                onUpdate(category, editName.trim())
+                            }
+                            isEditing = false
+                        }) {
+                            Icon(Icons.Default.Check, contentDescription = "저장", tint = MaterialTheme.colorScheme.primary)
+                        }
+                        IconButton(onClick = {
+                            isEditing = false
+                            editName = category.name // 초기화
+                        }) {
+                            Icon(Icons.Default.Close, contentDescription = "취소")
+                        }
+                    }
+                }
+            )
+        } else {
+            // [일반 모드]
+            Text(
+                text = category.name,
+                modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                style = MaterialTheme.typography.bodyLarge
+            )
+            IconButton(onClick = { isEditing = true }) {
+                Icon(Icons.Default.Edit, contentDescription = "수정", tint = MaterialTheme.colorScheme.outline)
+            }
+            IconButton(onClick = onDeleteClick) {
+                Icon(Icons.Default.Delete, contentDescription = "삭제", tint = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+}
