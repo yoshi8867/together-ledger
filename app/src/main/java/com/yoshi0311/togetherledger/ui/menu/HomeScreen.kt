@@ -604,7 +604,7 @@ fun StatisticsView(
         sliceLabelTextColor = Color.Black,
         sliceLabelTextSize = 14.sp,
         isClickOnSliceEnabled = true,       // 클릭 활성화
-        activeSliceAlpha = 0.5f,            // 클릭 시 투명도 변화
+        activeSliceAlpha = 1.0f,            // 클릭 시 투명도 변화
         chartPadding = 40                   // 지시선이 그려질 공간 확보
     )
 
@@ -613,7 +613,13 @@ fun StatisticsView(
             .fillMaxSize()
             .padding(top = 160.dp),
     ) {
-        Text("${year}년 ${month}월 통계", style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = (year%2000).toString() + stringResource(R.string.year) + " "
+                    + month.toString() + stringResource(R.string.month),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .padding(dimensionResource(id = R.dimen.padding_small))
+        )
 
         // 3. 차트 표시
         Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
