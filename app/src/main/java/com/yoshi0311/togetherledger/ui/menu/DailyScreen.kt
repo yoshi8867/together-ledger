@@ -113,7 +113,7 @@ fun DailyScreen(
                 SingleChoiceSegmentedButtonRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp)
+//                        .padding(8.dp)
                 ) {
                     options.forEach { type ->
                         SegmentedButton(

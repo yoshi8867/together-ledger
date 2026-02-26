@@ -33,7 +33,9 @@ fun LedgerTopAppBar(
 //    navController: NavController,
 ) {
     CenterAlignedTopAppBar(
-        title = { Text(title) },
+        title = {
+            Text(title)
+                },
         modifier = modifier,
         scrollBehavior = scrollBehavior,
         navigationIcon = {
@@ -46,17 +48,5 @@ fun LedgerTopAppBar(
                 }
             }
         },
-//        actions = {
-//            TextButton(onClick = {
-//                navController.navigate(DailyDestination.route)
-//            }) {
-//                Text("Daily")
-//            }
-//            TextButton(onClick = {
-//                navController.navigate(MonthlyDestination.route)
-//            }) {
-//                Text("Monthly")
-//            }
-//        },
     )
 }
