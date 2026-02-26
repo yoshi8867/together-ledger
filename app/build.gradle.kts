@@ -88,4 +88,6 @@ dependencies {
     // Testing
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
+
+    implementation("co.yml:ycharts:2.1.0")
 }

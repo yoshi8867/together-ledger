@@ -116,7 +116,7 @@ fun TransactionInfo.toTransactionUiState(isEntryValid: Boolean = false): Transac
 
 fun TransactionInfo.toTransactionDetails(): TransactionDetails = TransactionDetails(
     id = id,
-    categoryName = categoryName,
+    categoryName = categoryName ?: "",
     categoryId = categoryId,
     content = content,
     timeStamp = timeStamp,

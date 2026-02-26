@@ -1,5 +1,6 @@
 package com.yoshi0311.togetherledger.ui.menu
 
+import android.graphics.Typeface
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -42,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -51,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -73,7 +77,12 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.ceil
+import co.yml.charts.common.model.PlotType
+import co.yml.charts.ui.piechart.charts.PieChart
+import co.yml.charts.ui.piechart.models.PieChartConfig
+import co.yml.charts.ui.piechart.models.PieChartData
 
 object DailyDestination : NavigationDestination {
     override val route = "daily"
@@ -201,6 +210,12 @@ private fun HomeBody(
                 )
             }
             ScreenType.STATISTICS -> {
+                StatisticsView(
+                    transactionList = transactionList,
+                    year = listUiState.selectedYear,
+                    month = listUiState.selectedMonth,
+                    modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.padding_small)),
+                )
             }
             // ScreenType.LIST
             else -> {
@@ -296,7 +311,7 @@ private fun DailyItem(
         ) {
             // 좌측: 분류
             Text(
-                text = transaction.categoryName,
+                text = transaction.categoryName ?: "",
                 modifier = Modifier.weight(2f), // 좌측 정렬
                 fontSize = 12.sp
             )
@@ -520,6 +535,102 @@ private fun CalendarItem(
         }
     }
 
+}
+
+
+data class CategorySummary(
+    val name: String,
+    val totalAmount: Long,
+    val color: Color
+)
+
+fun generateColorForCategory(name: String): Color {
+    // 이름의 해시코드를 이용해 고유한 색상 생성
+    val hash = name.hashCode()
+
+    // 비트 연산을 통해 RGB 값을 추출 (abs로 양수 보장)
+    val r = abs(hash shr 16 and 0xFF)
+    val g = abs(hash shr 8 and 0xFF)
+    val b = abs(hash and 0xFF)
+
+    return Color(r, g, b)
+}
+
+@Composable
+fun StatisticsView(
+    transactionList: List<TransactionInfo>,
+    year: Int,
+    month: Int,
+    modifier: Modifier = Modifier,
+) {
+
+    // 1. 데이터 가공: 카테고리별로 그룹화하여 합산 금액 계산
+    val categoryStats = remember(transactionList) {
+        transactionList
+            .groupBy { it.categoryName ?: "미지정" }
+            .map { (name, list) ->
+                CategorySummary(
+                    name = name,
+                    totalAmount = list.sumOf { it.amount.toLong() },
+                    color = generateColorForCategory(name) // 카테고리별 고유 색상 할당
+                )
+            }
+            .sortedByDescending { it.totalAmount } // 금액 큰 순 정렬
+    }
+
+    // 1. 데이터 가공 및 차트 슬라이스 생성
+    var selectedCategoryName by remember { mutableStateOf<String?>(null) }
+
+    val pieChartData = PieChartData(
+        slices = transactionList
+            .groupBy { it.categoryName }
+            .map { (name, list) ->
+                PieChartData.Slice(
+                    label = name ?: "",
+                    value = list.sumOf { it.amount }.toFloat(),
+                    color = generateColorForCategory(name ?: "")
+                )
+            },
+        plotType = PlotType.Pie
+    )
+
+    // 2. 차트 설정 (지시선 및 디자인)
+    val pieChartConfig = PieChartConfig(
+        isAnimationEnable = true,
+        showSliceLabels = true,             // 지시선(라벨) 표시
+        sliceLabelTypeface = Typeface.DEFAULT_BOLD,
+        sliceLabelTextColor = Color.Black,
+        sliceLabelTextSize = 14.sp,
+        isClickOnSliceEnabled = true,       // 클릭 활성화
+        activeSliceAlpha = 0.5f,            // 클릭 시 투명도 변화
+        chartPadding = 40                   // 지시선이 그려질 공간 확보
+    )
+
+    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+        Text("${year}년 ${month}월 통계", style = MaterialTheme.typography.titleLarge)
+
+        // 3. 차트 표시
+        Box(modifier = Modifier.fillMaxWidth().height(300.dp)) {
+            PieChart(
+                modifier = Modifier.fillMaxSize(),
+                pieChartData = pieChartData,
+                pieChartConfig = pieChartConfig
+            ) { slice ->
+                // 💡 클릭 이벤트 처리: 선택된 카테고리 업데이트
+                selectedCategoryName = if (selectedCategoryName == slice.label) null else slice.label
+            }
+        }
+
+        // 4. 하단 필터링된 리스트
+//        val filteredList = if (selectedCategoryName == null) transactionList
+//        else transactionList.filter { it.categoryName == selectedCategoryName }
+//
+//        LazyColumn(modifier = Modifier.weight(1f)) {
+//            items(filteredList) { transaction ->
+//                TransactionItemRow(transaction)
+//            }
+//        }
+    }
 }
 
 @Composable

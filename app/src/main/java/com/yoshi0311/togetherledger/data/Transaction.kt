@@ -36,5 +36,5 @@ data class TransactionInfo(
     val assetType: String,
     val isIncome: Boolean,
     val categoryId: Int = 0,
-    val categoryName: String,
+    val categoryName: String?,
 )
