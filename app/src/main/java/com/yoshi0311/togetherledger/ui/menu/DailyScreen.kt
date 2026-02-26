@@ -66,6 +66,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yoshi0311.togetherledger.LedgerTopAppBar
 import com.yoshi0311.togetherledger.R
 import com.yoshi0311.togetherledger.data.Transaction
+import com.yoshi0311.togetherledger.data.TransactionInfo
 import com.yoshi0311.togetherledger.ui.AppViewModelProvider
 import com.yoshi0311.togetherledger.ui.navigation.NavigationDestination
 import com.yoshi0311.togetherledger.ui.theme.TogetherLedgerTheme
@@ -179,7 +180,7 @@ fun DailyScreen(
 
 @Composable
 private fun DailyBody(
-    transactionList: List<Transaction>,
+    transactionList: List<TransactionInfo>,
     onItemClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -228,8 +229,8 @@ private fun DailyBody(
 
 @Composable
 private fun DailyList(
-    transactionList: List<Transaction>,
-    onItemClick: (Transaction) -> Unit,
+    transactionList: List<TransactionInfo>,
+    onItemClick: (TransactionInfo) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -282,7 +283,7 @@ private fun DailyList(
 
 @Composable
 private fun DailyItem(
-    transaction: Transaction,
+    transaction: TransactionInfo,
     modifier: Modifier = Modifier,
 ) {
 //    val dateTime = LocalDateTime.parse(transaction.timeStamp)
@@ -298,7 +299,7 @@ private fun DailyItem(
         ) {
             // 좌측: 분류
             Text(
-                text = transaction.category,
+                text = transaction.categoryName,
                 modifier = Modifier.weight(2f), // 좌측 정렬
                 fontSize = 12.sp
             )
@@ -343,7 +344,7 @@ enum class StartDayOfWeek {
 
 @Composable
 fun CalendarView(
-    transactionList: List<Transaction>,
+    transactionList: List<TransactionInfo>,
     year: Int,
     month: Int,
     startDayOfWeek: StartDayOfWeek = StartDayOfWeek.Sunday,
@@ -445,7 +446,7 @@ fun CalendarView(
         }
         DailyList(
             transactionList = if (selectedDay == null) {
-                emptyList<Transaction>()
+                emptyList<TransactionInfo>()
             } else {
                     transactionList.filter { transaction ->
                         val dayPart = transaction.timeStamp.substring(8, 10)
@@ -685,7 +686,7 @@ fun TestPreview() {
     val list: List<Transaction> = listOf(
         Transaction(
             id = 1,
-            category = "🍔식비",
+            categoryId = 0,
             content = "마켓컬리 주문",
             timeStamp = "2026-02-02 15:42:00",
             amount = 15800,
@@ -694,7 +695,7 @@ fun TestPreview() {
         ),
         Transaction(
             id = 2,
-            category = "🍪간식비",
+            categoryId = 0,
             content = "CU편의점",
             timeStamp = "2026-02-03 12:15:00",
             amount = 4200,
@@ -703,7 +704,7 @@ fun TestPreview() {
         ),
         Transaction(
             id = 3,
-            category = "🍟간식비",
+            categoryId = 0,
             content = "명랑핫도그",
             timeStamp = "2026-02-03 17:50:15",
             amount = 3800,
@@ -712,7 +713,7 @@ fun TestPreview() {
         ),
         Transaction(
             id = 4,
-            category = "🚌교통비",
+            categoryId = 0,
             content = "기후동행 충전",
             timeStamp = "2026-02-04 09:42:00",
             amount = 55000,
@@ -721,7 +722,7 @@ fun TestPreview() {
         ),
         Transaction(
             id = 5,
-            category = "부수입",
+            categoryId = 0,
             content = "방과후 수입",
             timeStamp = "2026-02-04 14:20:00",
             amount = 75000,
@@ -730,7 +731,7 @@ fun TestPreview() {
         ),
         Transaction(
             id = 6,
-            category = "💡공과금",
+            categoryId = 0,
             content = "전기요금 납부",
             timeStamp = "2026-02-04 20:05:00",
             amount = 72000,
@@ -739,7 +740,7 @@ fun TestPreview() {
         ),
         Transaction(
             id = 7,
-            category = "🍷데이트",
+            categoryId = 0,
             content = "레스토랑 저녁식사",
             timeStamp = "2026-02-06 19:30:00",
             amount = 68000,
@@ -748,7 +749,7 @@ fun TestPreview() {
         ),
         Transaction(
             id = 8,
-            category = "💼업무",
+            categoryId = 0,
             content = "카페 회의",
             timeStamp = "2026-02-07 10:45:00",
             amount = 12000,
@@ -757,7 +758,7 @@ fun TestPreview() {
         ),
         Transaction(
             id = 9,
-            category = "🍔식비",
+            categoryId = 0,
             content = "점심 도시락",
             timeStamp = "2026-02-07 13:10:00",
             amount = 8500,
@@ -791,9 +792,9 @@ fun TestPreview() {
 fun HomeBodyEmptyListPreview() {
     TogetherLedgerTheme {
         DailyItem(
-            Transaction(
+            TransactionInfo(
                 id = 1,
-                category = "🍔식비",
+                categoryName = "🍔식비",
                 content = "마켓컬리 주문",
                 timeStamp = "2026-02-02 15:42:00",
                 amount = 15800,

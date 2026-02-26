@@ -3,6 +3,7 @@ package com.yoshi0311.togetherledger.ui.menu
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yoshi0311.togetherledger.data.Transaction
+import com.yoshi0311.togetherledger.data.TransactionInfo
 import com.yoshi0311.togetherledger.data.TransactionsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -87,7 +88,7 @@ class DailyViewModel(private val transactionsRepository: TransactionsRepository)
 }
 
 data class ListUiState(
-    val transactionList: List<Transaction> = listOf(),
+    val transactionList: List<TransactionInfo> = listOf(),
     val selectedYear: Int = 0,
     val selectedMonth: Int = 0,
 )

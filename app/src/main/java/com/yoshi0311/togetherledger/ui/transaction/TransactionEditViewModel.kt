@@ -6,14 +6,20 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yoshi0311.togetherledger.data.CategoriesRepository
+import com.yoshi0311.togetherledger.data.Category
 import com.yoshi0311.togetherledger.data.TransactionsRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class TransactionEditViewModel(
     savedStateHandle: SavedStateHandle,
     private val transactionsRepository: TransactionsRepository,
+    private val categoriesRepository: CategoriesRepository,
 ) : ViewModel() {
 
     var transactionUiState by mutableStateOf(TransactionUiState())
@@ -47,6 +53,34 @@ class TransactionEditViewModel(
     private fun validateInput(uiState: TransactionDetails = transactionUiState.transactionDetails): Boolean {
         return with(uiState) {
             content.isNotBlank() && timeStamp.isNotBlank() && amount.isNotBlank()
+        }
+    }
+
+
+    val categoriesUiState: StateFlow<List<Category>> =
+        categoriesRepository.getAllCategoriesStream()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList()
+            )
+
+    fun addCategory(name: String, isIncome: Boolean) {
+        viewModelScope.launch {
+            categoriesRepository.insertCategory(Category(name = name, isIncome = isIncome))
+        }
+    }
+
+    fun deleteCategory(category: Category) {
+        viewModelScope.launch {
+            // TODO: 여기서 transactionsRepository를 조회해 해당 카테고리 사용 여부 체크 로직 추가 가능
+            categoriesRepository.deleteCategory(category)
+        }
+    }
+
+    fun updateCategory(category: Category, newName: String) {
+        viewModelScope.launch {
+            categoriesRepository.updateCategory(category.copy(name = newName))
         }
     }
 }

@@ -19,7 +19,10 @@ object AppViewModelProvider {
         }
         // Initializer for TransactionEntryViewModel
         initializer {
-            TransactionEntryViewModel(ledgerApplication().container.transactionsRepository)
+            TransactionEntryViewModel(
+                ledgerApplication().container.transactionsRepository,
+                ledgerApplication().container.categoriesRepository,
+                )
         }
         // Initializer for TransactionDetailsViewModel
         initializer {
@@ -31,7 +34,8 @@ object AppViewModelProvider {
         initializer {
             TransactionEditViewModel(
                 this.createSavedStateHandle(),
-                ledgerApplication().container.transactionsRepository
+                ledgerApplication().container.transactionsRepository,
+                ledgerApplication().container.categoriesRepository,
             )
         }
     }

@@ -8,15 +8,24 @@ import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -28,7 +37,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -60,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yoshi0311.togetherledger.LedgerTopAppBar
 import com.yoshi0311.togetherledger.R
+import com.yoshi0311.togetherledger.data.Category
 import com.yoshi0311.togetherledger.ui.AppViewModelProvider
 import com.yoshi0311.togetherledger.ui.navigation.NavigationDestination
 import com.yoshi0311.togetherledger.ui.theme.TogetherLedgerTheme
@@ -75,6 +87,8 @@ import java.util.Calendar
 import java.util.Currency
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.collectAsState
 
 object TransactionEntryDestination : NavigationDestination {
     override val route = "transaction_entry"
@@ -88,9 +102,8 @@ fun TransactionEntryScreen(
     onNavigateUp: () -> Unit,
     canNavigateBack: Boolean = true,
     viewModel: TransactionEntryViewModel = viewModel(factory = AppViewModelProvider.Factory),
-
-//    viewModel: TransactionEntryViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
+    val categories by viewModel.categoriesUiState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     Scaffold(
         topBar = {
@@ -110,6 +123,7 @@ fun TransactionEntryScreen(
                     navigateBack()
                 }
             },
+            categories = categories,
             modifier = Modifier
                 .padding(
                     start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
@@ -127,7 +141,8 @@ fun TransactionEntryBody(
     transactionUiState: TransactionUiState,
     onTransactionValueChange: (TransactionDetails) -> Unit,
     onSaveClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    categories: List<Category>,
 ) {
     Column(
         modifier = modifier
@@ -137,7 +152,8 @@ fun TransactionEntryBody(
         TransactionInputForm(
             transactionDetails = transactionUiState.transactionDetails,
             onValueChange = onTransactionValueChange,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            categories = categories,
         )
         Button(
             onClick = onSaveClick,
@@ -156,7 +172,8 @@ fun TransactionInputForm(
     transactionDetails: TransactionDetails,
     modifier: Modifier = Modifier,
     onValueChange: (TransactionDetails) -> Unit = {},
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    categories: List<Category>,
 ) {
     Column(
         modifier = modifier,
@@ -201,20 +218,6 @@ fun TransactionInputForm(
                 }
             }
         }
-
-//        OutlinedTextField(
-//            value = transactionDetails.timeStamp,
-//            onValueChange = { onValueChange(transactionDetails.copy(timeStamp = it)) },
-//            label = { Text(stringResource(R.string.transaction_timestamp_req)) },
-//            colors = OutlinedTextFieldDefaults.colors(
-//                focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-//                unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-//                disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-//            ),
-//            modifier = Modifier.fillMaxWidth(),
-//            enabled = enabled,
-//            singleLine = true
-//        )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -389,24 +392,25 @@ fun TransactionInputForm(
         )
 
         CategoryComboBox(
-            categories = listOf("식비", "간식비", "교통비"),
+            categories = categories,
             selected = transactionDetails.category,
             onSelected = {
-                onValueChange(transactionDetails.copy(category = it))
+                onValueChange(transactionDetails.copy(categoryId = it))
             },
             fieldName = stringResource(R.string.transaction_category_req),
             enabled = true,
         )
 
-        CategoryComboBox(
-            categories = listOf("현금", "하나카드", "국민은행"),
-            selected = transactionDetails.assetType,
-            onSelected = {
-                onValueChange(transactionDetails.copy(assetType = it))
-            },
-            fieldName = stringResource(R.string.transaction_asset_type_req),
-            enabled = true,
-        )
+        // 자산 구분은 추후 업데이트 하는 것으로...
+//        CategoryComboBox(
+//            categories = listOf("현금", "하나카드", "국민은행"),
+//            selected = transactionDetails.assetType,
+//            onSelected = {
+//                onValueChange(transactionDetails.copy(assetType = it))
+//            },
+//            fieldName = stringResource(R.string.transaction_asset_type_req),
+//            enabled = true,
+//        )
 
         if (enabled) {
             Text(
@@ -490,58 +494,145 @@ fun TimePickerDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryComboBox(
-    categories: List<String> = listOf(),
+    categories: List<Category>,
     selected: String,
-    onSelected: (String) -> Unit,
+    onSelected: (Int) -> Unit,
     fieldName: String,
     enabled: Boolean,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var showEditSheet by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { if (enabled) expanded = !expanded }
-    ) {
-        OutlinedTextField(
-            value = selected,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(fieldName) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
-                .clickable(enabled = enabled) { expanded = true },
-            enabled = enabled,
-            singleLine = true
-        )
-
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
+    Column {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            categories.forEach { item ->
-                DropdownMenuItem(
-                    text = { Text(item) },
-                    onClick = {
-                        onSelected(item)
-                        expanded = false
-                    }
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { if (enabled) expanded = !expanded },
+                modifier = Modifier.weight(1f),
+            ) {
+                OutlinedTextField(
+                    value = selected,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(fieldName) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                        .clickable(enabled = enabled) { expanded = true },
+                    enabled = enabled,
+                    singleLine = true
                 )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    categories.forEach { item ->
+                        DropdownMenuItem(
+                            text = { Text(item.name) },
+                            onClick = {
+                                onSelected(item.id)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            // 우측 편집 버튼
+            IconButton(
+                onClick = { showEditSheet = true },
+                enabled = enabled,
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Icon(Icons.Default.Settings, contentDescription = "카테고리 편집")
+            }
+
+        }
+    }
+
+    // 편집 모달 토글
+    if (showEditSheet) {
+        CategoryManagementSheet(
+            categories = categories,
+            onDismiss = { showEditSheet = false },
+            onAdd = { /* ViewModel 연결 예정 */ },
+            onDelete = { /* ViewModel 연결 예정 */ },
+            onUpdate = { _, _ -> /* ViewModel 연결 예정 */ }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CategoryManagementSheet(
+    categories: List<Category>,
+    onDismiss: () -> Unit,
+    onAdd: (String) -> Unit,
+    onDelete: (Category) -> Unit,
+    onUpdate: (Category, String) -> Unit
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .navigationBarsPadding()
+        ) {
+            Text("카테고리 편집", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 새 카테고리 추가 입력창
+            var newCategoryName by remember { mutableStateOf("") }
+            OutlinedTextField(
+                value = newCategoryName,
+                onValueChange = { newCategoryName = it },
+                label = { Text("새 카테고리 추가") },
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    IconButton(onClick = {
+                        if(newCategoryName.isNotBlank()) {
+                            onAdd(newCategoryName)
+                            newCategoryName = ""
+                        }
+                    }) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                    }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 카테고리 리스트
+            LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                items(categories) { category ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(category.name, modifier = Modifier.weight(1f))
+                        IconButton(onClick = { /* 수정 로직 */ }) {
+                            Icon(Icons.Default.Edit, contentDescription = null)
+                        }
+                        IconButton(onClick = { onDelete(category) }) {
+                            Icon(Icons.Default.Delete, contentDescription = null)
+                        }
+                    }
+                }
+            }
+
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+            ) {
+                Text("닫기")
             }
         }
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-private fun TransactionEntryScreenPreview() {
-    TogetherLedgerTheme {
-        TransactionEntryBody(transactionUiState = TransactionUiState(
-            TransactionDetails(
-                content = "content(for test)", amount = "2000"
-            )
-        ), onTransactionValueChange = {}, onSaveClick = {})
-    }
-}

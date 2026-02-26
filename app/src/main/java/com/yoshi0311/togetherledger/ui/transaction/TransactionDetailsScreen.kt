@@ -168,7 +168,7 @@ fun TransactionDetails(
 
             DetailsRow(
                 labelResID = R.string.transaction_category,
-                detail = transaction.category,
+                detail = transaction.categoryId.toString(),
                 modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen
                             .padding_medium))
             )
