@@ -210,12 +210,14 @@ private fun HomeBody(
                 )
             }
             ScreenType.STATISTICS -> {
-                StatisticsView(
-                    transactionList = transactionList,
-                    year = listUiState.selectedYear,
-                    month = listUiState.selectedMonth,
-                    modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.padding_small)),
-                )
+                if (!transactionList.isEmpty()) {
+                    StatisticsView(
+                        transactionList = transactionList,
+                        year = listUiState.selectedYear,
+                        month = listUiState.selectedMonth,
+                        modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.padding_small)),
+                    )
+                }
             }
             // ScreenType.LIST
             else -> {
@@ -606,7 +608,11 @@ fun StatisticsView(
         chartPadding = 40                   // 지시선이 그려질 공간 확보
     )
 
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(top = 160.dp),
+    ) {
         Text("${year}년 ${month}월 통계", style = MaterialTheme.typography.titleLarge)
 
         // 3. 차트 표시
@@ -622,14 +628,18 @@ fun StatisticsView(
         }
 
         // 4. 하단 필터링된 리스트
-//        val filteredList = if (selectedCategoryName == null) transactionList
-//        else transactionList.filter { it.categoryName == selectedCategoryName }
-//
-//        LazyColumn(modifier = Modifier.weight(1f)) {
-//            items(filteredList) { transaction ->
-//                TransactionItemRow(transaction)
-//            }
-//        }
+
+        DailyView(
+            transactionList = if (selectedCategoryName == null) transactionList
+            else transactionList.filter { it.categoryName == selectedCategoryName },
+            onItemClick = { },
+            contentPadding = PaddingValues(0.dp),
+            modifier = Modifier.padding(
+                start = dimensionResource(id = R.dimen.padding_small),
+                end = dimensionResource(id = R.dimen.padding_small),
+                bottom = 100.dp
+            ),
+        )
     }
 }
 
