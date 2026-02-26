@@ -2,7 +2,6 @@ package com.yoshi0311.togetherledger.ui.menu
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yoshi0311.togetherledger.data.Transaction
 import com.yoshi0311.togetherledger.data.TransactionInfo
 import com.yoshi0311.togetherledger.data.TransactionsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +14,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class DailyViewModel(private val transactionsRepository: TransactionsRepository): ViewModel() {
+class HomeViewModel(private val transactionsRepository: TransactionsRepository): ViewModel() {
 
     private val today = LocalDate.now()
     private val _selectedDate = MutableStateFlow(Pair(today.year, today.monthValue))

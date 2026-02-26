@@ -1,6 +1,5 @@
 package com.yoshi0311.togetherledger.ui.menu
 
-import android.R.attr.onClick
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -36,7 +34,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -91,11 +88,11 @@ enum class ScreenType {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DailyScreen(
+fun HomeScreen(
     navigateToTransactionEntry: () -> Unit,
     navigateToTransactionUpdate: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: DailyViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val listUiState by viewModel.listUiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -215,7 +212,7 @@ private fun DailyBody(
                         modifier = Modifier.padding(contentPadding),
                     )
                 } else {
-                    DailyList(
+                    DailyView(
                         transactionList = transactionList,
                         onItemClick = { onItemClick(it.id) },
                         contentPadding = contentPadding,
@@ -228,7 +225,7 @@ private fun DailyBody(
 }
 
 @Composable
-private fun DailyList(
+private fun DailyView(
     transactionList: List<TransactionInfo>,
     onItemClick: (TransactionInfo) -> Unit,
     contentPadding: PaddingValues,
@@ -444,7 +441,7 @@ fun CalendarView(
                 )
             }
         }
-        DailyList(
+        DailyView(
             transactionList = if (selectedDay == null) {
                 emptyList<TransactionInfo>()
             } else {

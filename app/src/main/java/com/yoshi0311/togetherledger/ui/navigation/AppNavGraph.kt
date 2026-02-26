@@ -8,7 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.yoshi0311.togetherledger.ui.menu.DailyDestination
-import com.yoshi0311.togetherledger.ui.menu.DailyScreen
+import com.yoshi0311.togetherledger.ui.menu.HomeScreen
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsDestination
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsScreen
 import com.yoshi0311.togetherledger.ui.transaction.TransactionEditDestination
@@ -27,7 +27,7 @@ fun AppNavHost(
         modifier = modifier,
     ) {
         composable(route = DailyDestination.route) {
-            DailyScreen(
+            HomeScreen(
                 navigateToTransactionEntry = { navController.navigate(TransactionEntryDestination.route) },
                 navigateToTransactionUpdate = {
                     navController.navigate("${TransactionDetailsDestination.route}/${it}")
