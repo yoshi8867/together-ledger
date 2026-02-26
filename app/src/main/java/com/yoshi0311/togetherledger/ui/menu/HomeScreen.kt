@@ -164,7 +164,7 @@ fun HomeScreen(
             }
         },
     ) { innerPadding ->
-        DailyBody(
+        HomeBody(
             transactionList = listUiState.transactionList,
             onItemClick = navigateToTransactionUpdate,
             modifier = modifier.fillMaxSize(),
@@ -176,7 +176,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun DailyBody(
+private fun HomeBody(
     transactionList: List<TransactionInfo>,
     onItemClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
