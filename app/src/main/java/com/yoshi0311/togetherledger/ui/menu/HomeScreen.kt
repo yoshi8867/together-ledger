@@ -1,5 +1,6 @@
 package com.yoshi0311.togetherledger.ui.menu
 
+import android.R.attr.label
 import android.graphics.Typeface
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -587,10 +588,17 @@ fun StatisticsView(
         slices = transactionList
             .groupBy { it.categoryName }
             .map { (name, list) ->
+                val displayName = name ?: "미지정"
+                val totalAmount = list.sumOf { it.amount }.toLong()
+
+                val separator = "\u200B"
+                val formattedAmount = "(%,d원)".format(totalAmount)
+                val labelWithAmount = "$displayName$separator$formattedAmount"
+
                 PieChartData.Slice(
-                    label = name ?: "",
+                    label = labelWithAmount,
                     value = list.sumOf { it.amount }.toFloat(),
-                    color = generateColorForCategory(name ?: "")
+                    color = generateColorForCategory(name ?: ""),
                 )
             },
         plotType = PlotType.Pie
@@ -628,8 +636,8 @@ fun StatisticsView(
                 pieChartData = pieChartData,
                 pieChartConfig = pieChartConfig
             ) { slice ->
-                // 💡 클릭 이벤트 처리: 선택된 카테고리 업데이트
-                selectedCategoryName = if (selectedCategoryName == slice.label) null else slice.label
+                val clickedName = slice.label.split("\u200B")[0]
+                selectedCategoryName = if (selectedCategoryName == clickedName) null else clickedName
             }
         }
 
