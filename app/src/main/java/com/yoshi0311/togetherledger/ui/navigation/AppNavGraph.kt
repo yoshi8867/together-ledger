@@ -8,6 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.yoshi0311.togetherledger.ui.menu.DailyDestination
+import com.yoshi0311.togetherledger.ui.menu.DataManagementDestination
+import com.yoshi0311.togetherledger.ui.menu.DataManagementScreen
 import com.yoshi0311.togetherledger.ui.menu.HomeScreen
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsDestination
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsScreen
@@ -32,6 +34,7 @@ fun AppNavHost(
                 navigateToTransactionUpdate = {
                     navController.navigate("${TransactionDetailsDestination.route}/${it}")
                 },
+                navigateToDataManagement = { navController.navigate(DataManagementDestination.route) },
             )
         }
         composable(
@@ -60,6 +63,12 @@ fun AppNavHost(
         }
         composable(route = TransactionEntryDestination.route) {
             TransactionEntryScreen(
+                navigateBack = { navController.popBackStack() },
+                onNavigateUp = { navController.navigateUp() },
+            )
+        }
+        composable(route = DataManagementDestination.route) {
+            DataManagementScreen(
                 navigateBack = { navController.popBackStack() },
                 onNavigateUp = { navController.navigateUp() },
             )

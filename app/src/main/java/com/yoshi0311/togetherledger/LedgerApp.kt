@@ -1,4 +1,5 @@
 package com.yoshi0311.togetherledger
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -14,6 +15,7 @@ import com.yoshi0311.togetherledger.ui.navigation.AppNavHost
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import com.yoshi0311.togetherledger.ui.menu.DailyDestination
 
@@ -30,7 +32,7 @@ fun LedgerTopAppBar(
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     navigateUp: () -> Unit = {},
-//    navController: NavController,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     CenterAlignedTopAppBar(
         title = {
@@ -47,6 +49,22 @@ fun LedgerTopAppBar(
                     )
                 }
             }
+        },
+        actions = actions,
+    )
+}
+
+@Preview
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Test(
+
+) {
+    LedgerTopAppBar(
+        title = "TEST",
+        canNavigateBack = false,
+        navigateUp = {
+
         },
     )
 }

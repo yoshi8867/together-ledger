@@ -42,6 +42,15 @@ interface TransactionDao {
         end: String, // LocalDateTime,
     ): Flow<List<TransactionInfo>>
 
+    @Query("""
+        SELECT * FROM transactions 
+        WHERE timeStamp = :timeStamp 
+        AND isIncome = :isIncome 
+        AND (amount = :amount OR content = :content)
+        LIMIT 1
+    """)
+    suspend fun findTransaction(timeStamp: String, isIncome: Boolean, amount: Int, content: String): Transaction?
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(transaction: Transaction)
 

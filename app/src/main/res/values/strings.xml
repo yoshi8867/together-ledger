@@ -17,11 +17,11 @@
 
     <string name="app_name">TogetherLedger</string>
     <string name="daily_screen">목록</string>
-    <string name="montly_screen">월별 조회</string>
     <string name="back_button">뒤로</string>
-    <string name="no_item_description">No data.\nTap + to add.</string>
+    <string name="no_item_description">data 없음</string>
     <string name="transaction_detail_title">항목 조회</string>
     <string name="transaction_edit_title">편집</string>
+    <string name="management_data_title">데이터 관리</string>
     <string name="transaction_entry_title">입력</string>
     <string name="save_action">저장</string>
     <string name="transaction_category_req">구분</string>
@@ -54,4 +54,8 @@
     <string name="next">다음</string>
     <string name="prev">이전</string>
     <string name="this_month">이달</string>
+
+    <string name="import_from_sms">문자(sms) 읽어오기</string>
+    <string name="import_from_excel">엑셀(csv) 읽어오기</string>
+    <string name="export_to_excel">엑셀(csv) 내보내기</string>
 </resources>

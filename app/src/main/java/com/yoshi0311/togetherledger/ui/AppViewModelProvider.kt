@@ -6,6 +6,8 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.yoshi0311.togetherledger.LedgerApplication
+import com.yoshi0311.togetherledger.ui.menu.DataManagementScreen
+import com.yoshi0311.togetherledger.ui.menu.DataManagementViewModel
 import com.yoshi0311.togetherledger.ui.menu.HomeViewModel
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsViewModel
 import com.yoshi0311.togetherledger.ui.transaction.TransactionEditViewModel
@@ -34,6 +36,13 @@ object AppViewModelProvider {
         initializer {
             TransactionEditViewModel(
                 this.createSavedStateHandle(),
+                ledgerApplication().container.transactionsRepository,
+                ledgerApplication().container.categoriesRepository,
+            )
+        }
+        // Initializer for DataManagementViewModel
+        initializer {
+            DataManagementViewModel(
                 ledgerApplication().container.transactionsRepository,
                 ledgerApplication().container.categoriesRepository,
             )

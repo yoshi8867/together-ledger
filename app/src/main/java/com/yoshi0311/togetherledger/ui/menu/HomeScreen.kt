@@ -29,12 +29,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.Scaffold
@@ -51,6 +53,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.alpha
@@ -65,6 +68,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.yoshi0311.togetherledger.LedgerTopAppBar
 import com.yoshi0311.togetherledger.R
 import com.yoshi0311.togetherledger.data.Transaction
@@ -101,12 +105,13 @@ enum class ScreenType {
 fun HomeScreen(
     navigateToTransactionEntry: () -> Unit,
     navigateToTransactionUpdate: (Int) -> Unit,
+    navigateToDataManagement: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val listUiState by viewModel.listUiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val screenType = remember { mutableStateOf(ScreenType.LIST) }
+    val screenType = rememberSaveable { mutableStateOf(ScreenType.LIST) }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -116,6 +121,14 @@ fun HomeScreen(
                     title = stringResource(DailyDestination.titleRes),
                     canNavigateBack = false,
                     scrollBehavior = scrollBehavior,
+                    actions = {
+                        IconButton(onClick = navigateToDataManagement) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "데이터 관리"
+                            )
+                        }
+                    },
                 )
                 val options = listOf(ScreenType.LIST, ScreenType.CALENDAR, ScreenType.STATISTICS)
                 SingleChoiceSegmentedButtonRow(
@@ -165,7 +178,7 @@ fun HomeScreen(
                         end = WindowInsets.safeDrawing.asPaddingValues()
                             .calculateEndPadding(LocalLayoutDirection.current)
                     )
-                    .alpha(0.95f) // 여기서 반투명 처리
+                    // .alpha(0.95f) // 여기서 반투명 처리
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -217,6 +230,7 @@ private fun HomeBody(
                         year = listUiState.selectedYear,
                         month = listUiState.selectedMonth,
                         modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.padding_small)),
+                        contentPadding = contentPadding,
                     )
                 }
             }
@@ -413,7 +427,7 @@ fun CalendarView(
 
     Column(
         modifier = modifier
-            .padding(top = 160.dp),
+            .padding(contentPadding),
     ) {
         Text(
             text = (year%2000).toString() + stringResource(R.string.year) + " "
@@ -473,7 +487,6 @@ fun CalendarView(
             modifier = Modifier.padding(
                 start = dimensionResource(id = R.dimen.padding_small),
                 end = dimensionResource(id = R.dimen.padding_small),
-                bottom = 100.dp
             ),
         )
     }
@@ -565,22 +578,8 @@ fun StatisticsView(
     year: Int,
     month: Int,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
 ) {
-
-    // 1. 데이터 가공: 카테고리별로 그룹화하여 합산 금액 계산
-    val categoryStats = remember(transactionList) {
-        transactionList
-            .groupBy { it.categoryName ?: "미지정" }
-            .map { (name, list) ->
-                CategorySummary(
-                    name = name,
-                    totalAmount = list.sumOf { it.amount.toLong() },
-                    color = generateColorForCategory(name) // 카테고리별 고유 색상 할당
-                )
-            }
-            .sortedByDescending { it.totalAmount } // 금액 큰 순 정렬
-    }
-
     // 1. 데이터 가공 및 차트 슬라이스 생성
     var selectedCategoryName by remember { mutableStateOf<String?>(null) }
 
@@ -619,7 +618,7 @@ fun StatisticsView(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(top = 160.dp),
+            .padding(contentPadding),
     ) {
         Text(
             text = (year%2000).toString() + stringResource(R.string.year) + " "
@@ -651,7 +650,6 @@ fun StatisticsView(
             modifier = Modifier.padding(
                 start = dimensionResource(id = R.dimen.padding_small),
                 end = dimensionResource(id = R.dimen.padding_small),
-                bottom = 100.dp
             ),
         )
     }

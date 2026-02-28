@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CategoryDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(category: Category)
+    suspend fun insert(category: Category): Long
 
     @Update
     suspend fun update(category: Category)
@@ -27,4 +27,10 @@ interface CategoryDao {
 
     @Query("SELECT * FROM categories WHERE isIncome = :isIncome ORDER BY name ASC")
     fun getCategoriesByType(isIncome: Boolean): Flow<List<Category>>
+
+    @Query("SELECT id FROM categories WHERE name = :name LIMIT 1")
+    suspend fun getCategoryIdByName(name: String): Int?
+
+    @Insert
+    suspend fun insertCategory(category: Category): Long
 }
