@@ -601,7 +601,7 @@ fun StatisticsView(
         isAnimationEnable = true,
         showSliceLabels = true,             // 지시선(라벨) 표시
         sliceLabelTypeface = Typeface.DEFAULT_BOLD,
-        sliceLabelTextColor = Color.Black,
+        sliceLabelTextColor = Color.White,
         sliceLabelTextSize = 14.sp,
         isClickOnSliceEnabled = true,       // 클릭 활성화
         activeSliceAlpha = 1.0f,            // 클릭 시 투명도 변화

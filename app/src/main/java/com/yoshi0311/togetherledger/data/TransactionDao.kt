@@ -13,27 +13,27 @@ import java.time.LocalDateTime
 interface TransactionDao {
     @Query("""
         SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId, 
-               c.name AS categoryName
+               COALESCE(c.name, ' ') AS categoryName
         FROM transactions AS t
-        INNER JOIN categories AS c ON t.categoryId = c.id
+        LEFT JOIN categories AS c ON t.categoryId = c.id
         ORDER BY t.timeStamp DESC
     """)
     fun getAllTransactions(): Flow<List<TransactionInfo>>
 
     @Query("""
         SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId, 
-               c.name AS categoryName
+               COALESCE(c.name, ' ') AS categoryName
         FROM transactions AS t
-        INNER JOIN categories AS c ON t.categoryId = c.id
+        LEFT JOIN categories AS c ON t.categoryId = c.id
         WHERE t.id = :id
     """)
     fun getTransaction(id: Int): Flow<TransactionInfo>
 
     @Query("""
         SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId, 
-               c.name AS categoryName
+               COALESCE(c.name, ' ') AS categoryName
         FROM transactions AS t
-        INNER JOIN categories AS c ON t.categoryId = c.id
+        LEFT JOIN categories AS c ON t.categoryId = c.id
         WHERE t.timeStamp >= :start AND t.timeStamp < :end
         ORDER BY DATE(t.timeStamp) DESC, TIME(t.timeStamp) ASC
     """)

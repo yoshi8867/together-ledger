@@ -80,7 +80,7 @@ data class TransactionUiState(
 data class TransactionDetails(
     val id: Int = 0,
     val categoryName: String = "",
-    val categoryId: Int = 0,
+    val categoryId: Int? = null,
     val content: String = "",
     val timeStamp: String = "",
     val amount: String = "",

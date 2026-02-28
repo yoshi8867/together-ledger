@@ -12,7 +12,7 @@ import androidx.room.PrimaryKey
             entity = Category::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.SET_NULL
         )
     ],
     indices = [Index(value = ["categoryId"])],
@@ -20,7 +20,7 @@ import androidx.room.PrimaryKey
 data class Transaction(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val categoryId: Int = 0, // 구분 값이 필수 필드는 아니니까 일단 이렇게 둬볼까.
+    val categoryId: Int? = null,
     val content: String = "",
     val timeStamp: String = "",
     val amount: Int = 0,
@@ -35,6 +35,6 @@ data class TransactionInfo(
     val amount: Int,
     val assetType: String,
     val isIncome: Boolean,
-    val categoryId: Int = 0,
+    val categoryId: Int? = null,
     val categoryName: String?,
 )
