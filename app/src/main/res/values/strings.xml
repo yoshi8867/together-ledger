@@ -15,7 +15,7 @@
   -->
 <resources>
 
-    <string name="app_name">TogetherLedger</string>
+    <string name="app_name">함께가계부</string>
     <string name="daily_screen">가계부</string>
     <string name="back_button">뒤로</string>
     <string name="no_item_description">data 없음</string>
