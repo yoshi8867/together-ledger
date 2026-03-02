@@ -86,6 +86,7 @@ data class TransactionDetails(
     val amount: String = "",
     val assetType: String = "",
     val isIncome: Boolean = false,
+    val smsText: String = "",
 )
 
 fun TransactionDetails.toTransaction(): Transaction = Transaction(

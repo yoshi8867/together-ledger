@@ -55,7 +55,7 @@
     <string name="prev">이전</string>
     <string name="this_month">이달</string>
 
-    <string name="import_from_sms">문자(sms) 읽어오기</string>
+    <string name="import_from_sms">문자 읽어오기(한달치)</string>
     <string name="import_from_excel">엑셀(csv) 읽어오기</string>
     <string name="export_to_excel">엑셀(csv) 내보내기</string>
 </resources>

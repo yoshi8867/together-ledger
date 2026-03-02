@@ -1,5 +1,7 @@
 package com.yoshi0311.togetherledger.ui.transaction
+import android.R.attr.value
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -7,6 +9,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -92,6 +95,9 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.unit.sp
+import java.time.format.TextStyle
 
 object TransactionEntryDestination : NavigationDestination {
     override val route = "transaction_entry"
@@ -439,6 +445,284 @@ fun TransactionInputForm(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TransactionInputFormSmall(
+    transactionDetails: TransactionDetails,
+    modifier: Modifier = Modifier,
+    onValueChange: (TransactionDetails) -> Unit = {},
+    enabled: Boolean = true,
+    categories: List<Category>,
+    onAddCategory: (String) -> Unit,
+    onDeleteCategory: (Category) -> Unit,
+    onUpdateCategory: (Category, String) -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(0.dp)
+    ) {
+        OutlinedCard(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 0.dp),
+            colors = CardDefaults.outlinedCardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 1.dp, vertical = 3.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Column(verticalArrangement = Arrangement.Center) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(
+                                selected = !transactionDetails.isIncome,      // 지출
+                                onClick = { onValueChange(transactionDetails.copy(isIncome = false)) },
+                                enabled = enabled,
+                                modifier = Modifier.scale(0.6f),
+                            )
+                            Text("지출", fontSize = 10.sp, modifier = Modifier.padding(start = 0.dp))
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(
+                                selected = transactionDetails.isIncome,       // 수입
+                                onClick = { onValueChange(transactionDetails.copy(isIncome = true)) },
+                                enabled = enabled,
+                                modifier = Modifier.scale(0.6f),
+                            )
+                            Text("수입", fontSize = 10.sp, modifier = Modifier.padding(start = 0.dp))
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.weight(4f),
+                    horizontalArrangement = Arrangement.spacedBy(1.dp) // 간격 조절
+                )
+                {
+                    var showDateModal by remember { mutableStateOf(false) }
+                    var selectedDate by remember { mutableStateOf<Long?>(null) }
+
+                    OutlinedTextField(
+                        value = transactionDetails.timeStamp.takeIf { it.isNotBlank() }
+                            ?.substringBefore(" ") ?: "",
+                        onValueChange = {
+                            onValueChange(transactionDetails.copy(timeStamp = it))
+                        },
+                        label = {
+                            Text(
+                                text = stringResource(R.string.transaction_timestamp_date_req),
+                                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 8.sp),
+                                )
+                            },
+                        placeholder = { Text("yyyy-MM-dd") },
+                        trailingIcon = {
+                            Icon(Icons.Default.DateRange, contentDescription = "Select date")
+                        },
+                        modifier = modifier
+                            .weight(3f)
+                            .pointerInput(selectedDate) {
+                                awaitEachGesture {
+                                    // Modifier.clickable doesn't work for text fields, so we use Modifier.pointerInput
+                                    // in the Initial pass to observe events before the text field consumes them
+                                    // in the Main pass.
+                                    awaitFirstDown(pass = PointerEventPass.Initial)
+                                    val upEvent = waitForUpOrCancellation(pass = PointerEventPass.Initial)
+                                    if (upEvent != null) {
+                                        showDateModal = true
+                                    }
+                                }
+                            },
+                        readOnly = true,
+                    )
+                    if (showDateModal) {
+                        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                        val initialDateMillis = try {
+                            LocalDate.parse(transactionDetails.timeStamp.substringBefore(" "), formatter)
+                                .atStartOfDay(ZoneOffset.UTC)   // UTC 기준으로 변환
+                                .toInstant()
+                                .toEpochMilli()
+                        } catch (e: Exception) {
+                            null
+                        }
+                        DatePickerModal(
+                            onDateSelected = { millis ->
+                                selectedDate = millis
+                                millis?.let {
+                                    val pickedDate = Instant.ofEpochMilli(it)
+                                        .atZone(ZoneId.systemDefault())
+                                        .toLocalDate()
+                                    val currentTime = transactionDetails.timeStamp.substringAfter(" ", "")
+                                        .ifBlank {
+                                            LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+                                        }
+                                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                                    val updatedDate = pickedDate.format(formatter)
+                                    val updated = if (currentTime.isNotBlank()) {
+                                        "$updatedDate $currentTime"
+                                    } else {
+                                        updatedDate
+                                    }
+                                    onValueChange(transactionDetails.copy(timeStamp = updated))
+                                }
+                            },
+                            onDismiss = { showDateModal = false },
+                            initialDateMillis = initialDateMillis,
+                        )
+                    }
+
+                    var showTimePicker by remember { mutableStateOf(false) }
+                    var selectedTime by remember { mutableStateOf<Long?>(null) }
+                    val currentTime = Calendar.getInstance()
+                    val timePickerState = rememberTimePickerState(
+                        initialHour = currentTime.get(Calendar.HOUR_OF_DAY),
+                        initialMinute = currentTime.get(Calendar.MINUTE),
+                        is24Hour = true,
+                    )
+
+                    OutlinedTextField(
+                        value = transactionDetails.timeStamp.takeIf { it.isNotBlank() }
+                            ?.substringAfter(" ") ?: "",
+                        onValueChange = {
+                            onValueChange(transactionDetails.copy(timeStamp = it))
+                        },
+                        label = {
+                            Text(
+                                text = stringResource(R.string.transaction_timestamp_time_req),
+                                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 8.sp),
+                            )
+                        },
+                        placeholder = { Text("HH:mm") },
+                        trailingIcon = {
+                            Icon(Icons.Outlined.Create, contentDescription = "Select time")
+                        },
+                        modifier = modifier
+                            .weight(2f)
+                            .pointerInput(selectedTime) {
+                                awaitEachGesture {
+                                    // Modifier.clickable doesn't work for text fields, so we use Modifier.pointerInput
+                                    // in the Initial pass to observe events before the text field consumes them
+                                    // in the Main pass.
+                                    awaitFirstDown(pass = PointerEventPass.Initial)
+                                    val upEvent = waitForUpOrCancellation(pass = PointerEventPass.Initial)
+                                    if (upEvent != null) {
+                                        showTimePicker = true
+                                    }
+                                }
+                            },
+                        readOnly = true,
+                    )
+                    if (showTimePicker) {
+                        val formatter = DateTimeFormatter.ofPattern("HH:mm")
+                        val initialTime = try {
+                            LocalTime.parse(transactionDetails.timeStamp.substringAfter(" "), formatter)
+                        } catch (e: Exception) {
+                            LocalTime.now()
+                        }
+                        TimePickerDialog(
+                            onDismiss = { showTimePicker = false },
+                            onConfirm = { timePickerState ->
+                                val pickedTime =
+                                    LocalTime.of(timePickerState.hour, timePickerState.minute)
+                                val currentDate =
+                                    transactionDetails.timeStamp.substringBefore(" ", "")
+                                        .ifBlank {
+                                            LocalDate.now()
+                                                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                                        }
+                                val formatter = DateTimeFormatter.ofPattern("HH:mm")
+                                val updatedTime = pickedTime.format(formatter)
+                                val updated = if (currentDate.isNotBlank()) {
+                                    "$currentDate $updatedTime"
+                                } else {
+                                    updatedTime
+                                }
+                                onValueChange(transactionDetails.copy(timeStamp = updated))
+                                showTimePicker = false
+                            },
+                            initialHour = initialTime.hour,
+                            initialMinute = initialTime.minute,
+                        ) {
+                            TimePicker(
+                                state = timePickerState,
+                            )
+                        }
+                    }
+                }
+
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 3.dp, vertical = 1.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                OutlinedTextField(
+                    value = transactionDetails.amount,
+                    onValueChange = { onValueChange(transactionDetails.copy(amount = it)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    label = { Text(stringResource(R.string.transaction_amount_req)) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    ),
+                    leadingIcon = { Text(Currency.getInstance(Locale.getDefault()).symbol) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 3.dp),
+                    enabled = enabled,
+                    singleLine = true
+                )
+
+                CategoryComboBox(
+                    categories = categories,
+                    selectedCategoryId = transactionDetails.categoryId,
+                    onSelected = {
+                        onValueChange(transactionDetails.copy(categoryId = it))
+                    },
+                    fieldName = stringResource(R.string.transaction_category_req),
+                    enabled = true,
+                    onAdd = onAddCategory,
+                    onDelete = onDeleteCategory,
+                    onUpdate = onUpdateCategory,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
+        OutlinedTextField(
+            value = transactionDetails.content,
+            onValueChange = { onValueChange(transactionDetails.copy(content = it)) },
+            label = { Text(stringResource(R.string.transaction_content_req)) },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+            ),
+            modifier = Modifier.fillMaxWidth().padding(0.dp),
+            enabled = enabled,
+            singleLine = false,
+            maxLines = 4,
+        )
+
+        Text(
+            text = transactionDetails.smsText,
+            fontSize = 10.sp,
+            lineHeight = 12.sp,
+        )
+    }
+}
+
 fun convertMillisToDate(millis: Long): String {
     val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     return formatter.format(Date(millis))
@@ -520,12 +804,15 @@ fun CategoryComboBox(
     onAdd: (String) -> Unit,
     onDelete: (Category) -> Unit,
     onUpdate: (Category, String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var showEditSheet by remember { mutableStateOf(false) }
-    val selectedCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: "카테고리 선택"
+    val selectedCategoryName = categories.find { it.id == selectedCategoryId }?.name ?: " "
 
-    Column {
+    Column(
+        modifier = modifier,
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
