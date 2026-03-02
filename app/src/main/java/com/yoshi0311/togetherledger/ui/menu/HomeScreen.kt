@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -62,6 +63,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -124,7 +126,7 @@ fun HomeScreen(
                     actions = {
                         IconButton(onClick = navigateToDataManagement) {
                             Icon(
-                                imageVector = Icons.Default.Share,
+                                imageVector = Icons.Default.Settings,
                                 contentDescription = "데이터 관리"
                             )
                         }
@@ -323,14 +325,15 @@ private fun DailyItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 2.dp),
+                .padding(vertical = 2.dp, horizontal = 3.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // 좌측: 분류
             Text(
                 text = transaction.categoryName ?: "",
                 modifier = Modifier.weight(2f), // 좌측 정렬
-                fontSize = 12.sp
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
             )
 
             // 중앙: 내용 + 시각
@@ -591,7 +594,7 @@ fun StatisticsView(
                 val totalAmount = list.sumOf { it.amount }.toLong()
 
                 val separator = "\u200B"
-                val formattedAmount = "(%,d원)".format(totalAmount)
+                val formattedAmount = "" // ""(%,d원)".format(totalAmount)
                 val labelWithAmount = "$displayName$separator$formattedAmount"
 
                 PieChartData.Slice(
@@ -641,10 +644,31 @@ fun StatisticsView(
         }
 
         // 4. 하단 필터링된 리스트
+        val filteredList = if (selectedCategoryName == null) {
+            transactionList
+        } else {
+            transactionList.filter { it.categoryName == selectedCategoryName }
+        }
+
+        val totalAmount = filteredList.sumOf { it.amount }
+
+        // 합계 금액 포맷팅
+        val formattedTotal = NumberFormat.getNumberInstance(Locale.KOREA).format(totalAmount)
+        var displayName = selectedCategoryName ?: "전체"
+        displayName = if (displayName == " ") "미분류" else displayName
+        Text(
+            text = displayName + ": 총 ${formattedTotal}원",
+            modifier = Modifier.padding(
+                start = dimensionResource(id = R.dimen.padding_small),
+                end = dimensionResource(id = R.dimen.padding_small),
+                top = 8.dp
+            ),
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
 
         DailyView(
-            transactionList = if (selectedCategoryName == null) transactionList
-            else transactionList.filter { it.categoryName == selectedCategoryName },
+            transactionList = filteredList,
             onItemClick = { },
             contentPadding = PaddingValues(0.dp),
             modifier = Modifier.padding(

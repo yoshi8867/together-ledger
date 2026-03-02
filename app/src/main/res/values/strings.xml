@@ -16,7 +16,7 @@
 <resources>
 
     <string name="app_name">TogetherLedger</string>
-    <string name="daily_screen">목록</string>
+    <string name="daily_screen">가계부</string>
     <string name="back_button">뒤로</string>
     <string name="no_item_description">data 없음</string>
     <string name="transaction_detail_title">항목 조회</string>

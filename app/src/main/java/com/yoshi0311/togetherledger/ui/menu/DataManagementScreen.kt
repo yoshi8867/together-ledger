@@ -95,7 +95,7 @@ fun DataManagementScreen(
     Scaffold(
         topBar = {
             LedgerTopAppBar(
-                title = stringResource(TransactionEditDestination.titleRes),
+                title = stringResource(DataManagementDestination.titleRes),
                 canNavigateBack = true,
                 navigateUp = onNavigateUp,
             )
