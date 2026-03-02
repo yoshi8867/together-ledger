@@ -439,6 +439,38 @@ fun CalendarView(
             modifier = Modifier
                 .padding(dimensionResource(id = R.dimen.padding_small))
         )
+
+
+        // ⬇️ 💡 핵심: 요일 헤더 Row 추가 ⬇️
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            val daysOfWeek = if (startDayOfWeek == StartDayOfWeek.Sunday) {
+                listOf("일", "월", "화", "수", "목", "금", "토")
+            } else {
+                listOf("월", "화", "수", "목", "금", "토", "일")
+            }
+
+            daysOfWeek.forEachIndexed { index, day ->
+                Text(
+                    text = day,
+                    modifier = Modifier
+                        .weight(1f) // 각 요일이 동일한 너비를 가지도록
+                        .padding(vertical = 8.dp),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = when (index) {
+                        0 -> if (startDayOfWeek == StartDayOfWeek.Sunday) Color.Red else Color.Black // 첫 번째 날 (일 또는 월)
+                        6 -> if (startDayOfWeek == StartDayOfWeek.Sunday) Color.Black else Color.Red // 마지막 날 (토 또는 일)
+                        else -> Color.Black
+                    }
+                )
+            }
+        }
+        // ⬆️ 💡 요일 헤더 Row 추가 끝 ⬆️
+
+
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
         ) {

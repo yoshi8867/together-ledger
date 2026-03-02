@@ -18,17 +18,17 @@ abstract class LedgerDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): LedgerDatabase {
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, LedgerDatabase::class.java, "ledger_database")
-                    /**
-                     * Setting this option in your app's database builder means that Room
-                     * permanently deletes all data from the tables in your database when it
-                     * attempts to perform a migration with no defined migration path.
-                     */
-                    .fallbackToDestructiveMigration()
-                    .build()
-                    .also {
-                        com.yoshi0311.togetherledger.data.LedgerDatabase.Companion.Instance = it
-                    }
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    LedgerDatabase::class.java,
+                    "together_ledger.db"
+                )
+                .createFromAsset("database/together_ledger.db")
+                .fallbackToDestructiveMigration()
+                .build()
+
+                Instance = instance
+                instance
             }
         }
 
