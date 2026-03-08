@@ -45,6 +45,8 @@ object AppViewModelProvider {
             DataManagementViewModel(
                 ledgerApplication().container.transactionsRepository,
                 ledgerApplication().container.categoriesRepository,
+                ledgerApplication().container.notificationsRepository,
+                ledgerApplication().container.appSettingsRepository,
             )
         }
     }

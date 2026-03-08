@@ -56,6 +56,8 @@
     <string name="this_month">이달</string>
 
     <string name="import_from_sms">문자 읽어오기(한달치)</string>
+    <string name="import_from_app_push">푸시 알림 읽어오기</string>
+    <string name="app_push_setting">앱 푸시 설정</string>
     <string name="import_from_excel">엑셀(csv) 읽어오기</string>
     <string name="export_to_excel">엑셀(csv) 내보내기</string>
 </resources>

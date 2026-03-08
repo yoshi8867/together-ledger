@@ -6,11 +6,12 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import kotlin.jvm.java
 
-@Database(entities = [Transaction::class, Category::class], version = 1, exportSchema = false)
+@Database(entities = [Transaction::class, Category::class, Notification::class], version = 1, exportSchema = false)
 abstract class LedgerDatabase : RoomDatabase() {
 
     abstract fun transactionDao(): TransactionDao
     abstract fun categoryDao(): CategoryDao
+    abstract fun notificationDao(): NotificationDao
 
     companion object {
         @Volatile

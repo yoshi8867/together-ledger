@@ -19,6 +19,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp") version "2.1.0-1.0.29"
     id("org.jetbrains.kotlin.plugin.compose")
+//    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -48,11 +49,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
     buildFeatures {
         compose = true
@@ -90,4 +91,10 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
 
     implementation("co.yml:ycharts:2.1.0")
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+//    implementation("com.google.dagger:hilt-android:2.51.1")
+//    ksp("com.google.dagger:hilt-compiler:2.51.1") // 또는 ksp(...)
 }

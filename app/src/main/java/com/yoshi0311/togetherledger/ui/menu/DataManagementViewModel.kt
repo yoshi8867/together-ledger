@@ -1,29 +1,41 @@
 package com.yoshi0311.togetherledger.ui.menu
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.datastore.dataStore
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yoshi0311.togetherledger.data.AppSettingsRepository
 import com.yoshi0311.togetherledger.data.CategoriesRepository
 import com.yoshi0311.togetherledger.data.Category
+import com.yoshi0311.togetherledger.data.Notification
+import com.yoshi0311.togetherledger.data.NotificationsRepository
 import com.yoshi0311.togetherledger.data.Transaction
 import com.yoshi0311.togetherledger.data.TransactionsRepository
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetails
-import com.yoshi0311.togetherledger.ui.transaction.TransactionUiState
 import com.yoshi0311.togetherledger.ui.transaction.toTransaction
 import com.yoshi0311.togetherledger.util.ExcelExporter
 import com.yoshi0311.togetherledger.util.SmsHelper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
@@ -42,37 +54,28 @@ import java.util.regex.Pattern
 class DataManagementViewModel(
     private val transactionsRepository: TransactionsRepository,
     private val categoriesRepository: CategoriesRepository,
+    private val notificationRepository: NotificationsRepository,
+    private val appSettingsRepository: AppSettingsRepository,
 ) : ViewModel() {
 
     private val _smsList = MutableStateFlow<List<Pair<Long, String>>>(emptyList())
     val smsList = _smsList.asStateFlow()
     var isImporting by mutableStateOf(false)
+    var isAppPushImporting by mutableStateOf(false)
 
     fun loadSmsMessages(context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
 
-            // 1. 현재 시간 (종료일)
             val endMs = System.currentTimeMillis()
-
-            // 2. 7일 전 시간 계산 (시작일)
             val calendar = Calendar.getInstance()
             calendar.timeInMillis = endMs
             calendar.add(Calendar.DAY_OF_YEAR, -31) // 10일 전으로 이동
             val startMs = calendar.timeInMillis
 
-            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-
-            val startDateString = sdf.format(Date(startMs))
-            val endDateString = sdf.format(Date(endMs))
-
-            Log.d("DATE_DEBUG", "시작일(Formatted): $startDateString")
-            Log.d("DATE_DEBUG", "종료일(Formatted): $endDateString")
-
             val allMessages = SmsHelper.fetchAllMessages(context, startMs, endMs)
             val rawMessages = filterFinancialMessages(allMessages)
             _smsList.value = rawMessages
 
-            Log.d("SMS_DEBUG", "총 ${rawMessages.size}개의 메시지를 찾았습니다.")
             val uiDateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
             // 4. 원본 데이터를 편집 가능한 TransactionDetails 리스트로 변환
@@ -131,37 +134,31 @@ class DataManagementViewModel(
 
     fun extractAmount(content: String): Int {
         val keywords = listOf("결제", "출금", "입금", "사용", "요금", "금액")
-        // 💡 1. 정규식을 사용하여 "숫자+원" 형태를 모두 찾음
-        val pattern = Pattern.compile("(\\d{1,3}(,\\d{3})*|\\d+)원")
+
+        // 1. 모든 숫자(3자리 이상) 위치와 값을 리스트로 저장
+        val pattern = Pattern.compile("(\\d{1,3}(,\\d{3})+|\\d{3,})")
         val matcher = pattern.matcher(content)
 
-        val foundAmounts = mutableListOf<Int>()
-        val matchedStrings = mutableListOf<String>()
-
+        val matches = mutableListOf<Pair<Int, Int>>() // Pair(시작위치, 숫자값)
         while (matcher.find()) {
-            val matchedString = matcher.group(1) // 쉼표 포함 숫자
-            matchedStrings.add(matcher.group(0)) // "10,000원" 전체
-
-            // 쉼표 제거 후 숫자로 변환
-            val amount = matchedString.replace(",", "").toIntOrNull() ?: 0
-            foundAmounts.add(amount)
+            val amount = matcher.group(1)?.replace(",", "")?.toIntOrNull() ?: 0
+            if (amount > 0) matches.add(Pair(matcher.start(), amount))
         }
 
-        if (foundAmounts.isEmpty()) return 0
-        if (foundAmounts.size == 1) return foundAmounts[0]
+        if (matches.isEmpty()) return 0
 
-        // 💡 2. 금액이 여러 개일 때 키워드 기준으로 필터링
-        // 예: "결제" 키워드가 포함된 경우, 그 이후에 나오는 금액을 찾거나 하는 로직 추가 가능
-        // 여기서는 간단하게 키워드가 포함된 문장 내의 금액을 찾도록 구현
+        // 2. 키워드를 찾아보고, 그 위치보다 큰 첫 번째 숫자 반환
         for (keyword in keywords) {
-            if (content.contains(keyword)) {
-                // 키워드 이후에 오는 첫 번째 금액을 찾는 등의 복잡한 로직이 필요할 수 있습니다.
-                // 일단 예시로 첫 번째 매칭 금액 반환
-                return foundAmounts[0]
+            val keywordIndex = content.indexOf(keyword)
+            if (keywordIndex != -1) {
+                // 키워드 위치 이후에 발견된 숫자 중 가장 먼저 나오는 것
+                val found = matches.find { it.first > keywordIndex }
+                if (found != null) return found.second
             }
         }
 
-        return foundAmounts[0] // 기본값
+        // 키워드가 없거나 뒤에 숫자가 없으면 그냥 첫 번째 숫자 반환
+        return matches[0].second
     }
 
     fun exportTransactionsToExcel(context: Context) {
@@ -332,4 +329,143 @@ class DataManagementViewModel(
     }
 
 
+    // 1. 필터링만 거친 앱 목록 (원본)
+    private val _rawFilteredApps = MutableStateFlow<List<AppInfoData>>(emptyList())
+    // 2. DataStore에서 가져온, 스위치가 켜진 패키지명 세트
+    val selectedAppsFlow = appSettingsRepository.selectedAppsFlow
+    // 3. UI가 구독할 최종 데이터 (필터링된 목록 + 선택 상태 결합)
+    val uiState: StateFlow<List<AppInfoData>> = combine(_rawFilteredApps, selectedAppsFlow) { apps, selectedNames ->
+        apps.map { app ->
+            // 현재 리스트의 앱이 저장된 패키지명 세트에 포함되어 있으면 isSelected = true
+            app.copy(isSelected = selectedNames.contains(app.packageName))
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val appList: StateFlow<List<AppInfoData>> = _rawFilteredApps.asStateFlow()
+
+    fun loadFinancialApps(context: Context) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val pm = context.packageManager
+            val installedApps = pm.getInstalledApplications(0)
+
+            val filtered = installedApps
+                .filter { app ->
+                    if (app.packageName.startsWith("com.android.") ||
+                        app.packageName.startsWith("com.google.") ||
+                        app.packageName.startsWith("com.spec.") ||
+                        app.packageName.startsWith("com.samsung.") ||
+                        app.packageName.startsWith("com.samsung.android.") ||
+                        app.packageName.startsWith("com.samsung.android.knox.") ||
+                        app.packageName.startsWith("com.sec.android.")) {
+                        false
+                    } else if(app.packageName == context.packageName) {
+                        false
+                    } else {
+                        isLikelyFinancialApp(app.packageName)
+                    }
+                }
+                .map { app ->
+                    AppInfoData(
+                        appName = pm.getApplicationLabel(app).toString(),
+                        packageName = app.packageName,
+                        icon = pm.getApplicationIcon(app),
+                        isSelected = false // 실제로는 저장된 DB값에서 가져와야 함
+                    )
+                }
+                .sortedBy { it.appName } // 가나다순 정렬 (찾기 쉽게!)
+
+            _rawFilteredApps.value = filtered
+        }
+    }
+
+    fun isLikelyFinancialApp(packageName: String): Boolean {
+        // 시스템 앱은 필터링 밖에서 처리하므로, 여기서는 패키지명만 검사합니다.
+        val lowerPkg = packageName.lowercase()
+
+        // 금융 관련 강력한 키워드 패턴들
+        val financePattern = Regex("bank|card|pay|money|finance|stock|toss|naverpay|kakaopay|kbstar|shinhan|woori|nhbank|coin|crypto")
+
+        // 특정 앱은 금융 앱으로 분류해야 하지만 키워드가 없는 경우 예외 처리 가능
+        // 예: if (lowerPkg == "com.specific.app") return true
+
+        return financePattern.containsMatchIn(lowerPkg)
+    }
+
+    fun toggleAppSelection(packageName: String) {
+        viewModelScope.launch {
+            // 현재 선택된 리스트를 가져와서 토글
+            val currentSet = selectedAppsFlow.first().toMutableSet()
+            if (currentSet.contains(packageName)) {
+                currentSet.remove(packageName)
+            } else {
+                currentSet.add(packageName)
+            }
+            // 저장소에 반영
+            appSettingsRepository.saveApps(currentSet)
+        }
+    }
+
+    val notificationList: StateFlow<List<Notification>> = notificationRepository.getUnprocessedNotifications()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000), // 화면이 사라져도 5초간 유지
+            initialValue = emptyList() // 초기값
+        )
+
+    private val _notificationToTransactionList = MutableStateFlow<List<TransactionDetails>>(emptyList())
+//    val notificationToTransactionList: StateFlow<List<TransactionDetails>> = _notificationToTransactionList
+    val notificationToTransactionList = _notificationToTransactionList.asStateFlow()
+
+    fun updateNotificationItem(updatedDetails: TransactionDetails) {
+        val currentList = _notificationToTransactionList.value.toMutableList()
+        val index = currentList.indexOfFirst { it.notificationId == updatedDetails.notificationId }
+        if (index != -1) {
+            currentList[index] = updatedDetails
+            _notificationToTransactionList.value = currentList.toList()
+        }
+    }
+
+    init {
+        // 1. 저장소의 알림을 계속 관찰합니다.
+        viewModelScope.launch {
+            notificationRepository.getUnprocessedNotifications().collect { notifications ->
+                Log.d("DB_UI_UPDATE", " 현재 리스트 크기: ${notifications.size}")
+                val newList = notifications.map { notification ->
+                    TransactionDetails(
+                        content = extractContent(notification.content),
+                        timeStamp = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(notification.timestamp)),
+                        amount = extractAmount(notification.content).toString(),
+                        isIncome = false,
+                        smsText = notification.content.replace(Regex("[\\n\\r]+"), " "),
+                        notificationId = notification.id,
+                    )
+                }
+                // 3. UI 상태 업데이트
+                _notificationToTransactionList.value = newList
+                // 3. UI 상태 업데이트
+                Log.d("DB_UI_UPDATE", "UI 상태 업데이트 완료! 현재 리스트 크기: ${_notificationToTransactionList.value.size}")
+            }
+        }
+    }
+
+    fun markNotificationAsProcessed(id: String) {
+        viewModelScope.launch {
+            // 백그라운드 스레드에서 DB 업데이트 수행
+            notificationRepository.markAsProcessed(id)
+        }
+    }
+
+    fun hasNotificationPermission(context: Context): Boolean {
+        val flat = Settings.Secure.getString(
+            context.contentResolver,
+            "enabled_notification_listeners"
+        )
+        return flat != null && flat.contains(context.packageName)
+    }
 }
+
+data class AppInfoData(
+    val appName: String,     // 사용자에게 보여줄 앱 이름 (예: "카카오뱅크")
+    val packageName: String, // 내부 식별용 패키지명 (예: "com.kakaobank.channel")
+    val icon: Drawable,      // 앱 아이콘 이미지
+    var isSelected: Boolean = false // 알림 읽기 설정 여부
+)
