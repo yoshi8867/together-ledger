@@ -24,7 +24,7 @@ abstract class LedgerDatabase : RoomDatabase() {
                     LedgerDatabase::class.java,
                     "together_ledger.db"
                 )
-//                .createFromAsset("database/together_ledger.db")
+                .createFromAsset("database/together_ledger.db")
                 .fallbackToDestructiveMigration()
                 .build()
 
