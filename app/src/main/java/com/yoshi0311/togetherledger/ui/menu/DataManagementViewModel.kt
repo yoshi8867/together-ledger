@@ -1,19 +1,14 @@
 package com.yoshi0311.togetherledger.ui.menu
 
 import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.datastore.dataStore
-import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yoshi0311.togetherledger.data.AppSettingsRepository
@@ -26,16 +21,15 @@ import com.yoshi0311.togetherledger.data.TransactionsRepository
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetails
 import com.yoshi0311.togetherledger.ui.transaction.toTransaction
 import com.yoshi0311.togetherledger.util.ExcelExporter
+import com.yoshi0311.togetherledger.util.NotificationHelper
 import com.yoshi0311.togetherledger.util.SmsHelper
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
@@ -84,7 +78,7 @@ class DataManagementViewModel(
                     content = extractContent(content),
                     timeStamp = uiDateFormatter.format(Date(timestamp)),
                     amount = extractAmount(content).toString(),
-                    isIncome = false,
+                    isIncome = isIncome(content),
                     smsText = content.replace(Regex("[\\n\\r]+"), " "),
                 )
             }
@@ -159,6 +153,44 @@ class DataManagementViewModel(
 
         // 키워드가 없거나 뒤에 숫자가 없으면 그냥 첫 번째 숫자 반환
         return matches[0].second
+    }
+
+    fun extractContentForNotification(packageName: String, content: String): String {
+
+        return when (packageName) {
+            "com.kbstar.kbbank" -> NotificationHelper.extractKbBankContent(content)
+            "com.kakaobank.channel" -> NotificationHelper.extractKakaobankContent(content)
+            else -> extractContent(content) // 기본 로직 유지
+        }
+    }
+
+    fun extractAmountForNotification(packageName: String, content: String): Int {
+
+        return when (packageName) {
+            "com.kbstar.kbbank" -> NotificationHelper.extractKbBankAmount(content)
+            "com.kakaobank.channel" -> NotificationHelper.extractKakaobankAmount(content)
+            else -> extractAmount(content) // 기본 로직 유지
+        }
+    }
+
+    fun isIncome(content: String): Boolean {
+        // 1. 수입을 나타내는 대표적인 키워드들
+        val incomeKeywords = listOf("입금", "취소", "환급")
+
+        // 2. 지출을 나타내는 대표적인 키워드들
+        val expenseKeywords = listOf("출금", "결제", "승인", "사용", "지불")
+
+        // 대괄호([]) 안의 내용을 먼저 검사하는 것이 가장 정확합니다.
+        val statusText = content.substringBefore("]", "").replace("[", "")
+
+        return when {
+            // 수입 키워드가 포함되어 있다면 true
+            incomeKeywords.any { statusText.contains(it) || content.contains(it) } -> true
+            // 지출 키워드가 포함되어 있다면 false
+            expenseKeywords.any { statusText.contains(it) || content.contains(it) } -> false
+            // 기본값은 지출로 처리 (보통 지출 알림이 더 많으므로)
+            else -> false
+        }
     }
 
     fun exportTransactionsToExcel(context: Context) {
@@ -431,10 +463,16 @@ class DataManagementViewModel(
                 Log.d("DB_UI_UPDATE", " 현재 리스트 크기: ${notifications.size}")
                 val newList = notifications.map { notification ->
                     TransactionDetails(
-                        content = extractContent(notification.content),
+                        content = extractContentForNotification(
+                            packageName = notification.packageName,
+                            content = notification.content,
+                        ),
                         timeStamp = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date(notification.timestamp)),
-                        amount = extractAmount(notification.content).toString(),
-                        isIncome = false,
+                        amount = extractAmountForNotification(
+                            packageName = notification.packageName,
+                            content = notification.content,
+                        ).toString(),
+                        isIncome = isIncome(notification.content),
                         smsText = notification.content.replace(Regex("[\\n\\r]+"), " "),
                         notificationId = notification.id,
                     )

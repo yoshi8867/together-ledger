@@ -44,8 +44,15 @@ class NotificationListener : NotificationListenerService() {
             // 2. 필터링 로직: 현재 앱이 선택된 목록에 있는지 확인
             if (selectedApps.contains(packageName)) {
 
-                val content = sbn.notification.extras.getString("android.text")
-                if (content != null) {
+                val title = sbn.notification.extras.getString("android.title") ?: ""
+                val text = sbn.notification.extras.getString("android.text") ?: ""
+                val content = if (title.isNotEmpty()) {
+                    "[$title]$text"
+                } else {
+                    text
+                }
+
+                if (content != "") {
                     // 3. 필터링 통과 시 데이터 생성 및 저장
                     val notification = Notification(
                         id = "${packageName}_${sbn.postTime}_${sbn.id}",

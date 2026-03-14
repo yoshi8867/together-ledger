@@ -214,8 +214,17 @@ fun DataManagementScreen(
             } else {
                 Button(
                     onClick = {
-                        viewModel.loadFinancialApps(context)
-                        isAppPushAllowListOpen = true
+                        if (viewModel.hasNotificationPermission(context)) {
+                            viewModel.loadFinancialApps(context)
+                            isAppPushAllowListOpen = true
+                        } else {
+                            // 권한이 없다면: 시스템 설정창으로 이동
+                            val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            context.startActivity(intent)
+
+                            Toast.makeText(context, "알림 접근 권한을 켜주세요.", Toast.LENGTH_LONG).show()
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth(0.7f)
@@ -272,8 +281,8 @@ fun PushMessageListScreen(
                     items = transactionList,
                     key = { transaction -> transaction.notificationId }
                 ) { transactionDetails ->
-                    Card() {
-                        Column(modifier = Modifier.padding(bottom = 40.dp)) {
+                    Card(modifier = Modifier.padding(bottom = 10.dp)) {
+                        Column(modifier = Modifier.padding(3.dp)) {
                             TransactionInputFormSmall(
                                 transactionDetails = transactionDetails,
                                 onValueChange = { updatedDetails ->
