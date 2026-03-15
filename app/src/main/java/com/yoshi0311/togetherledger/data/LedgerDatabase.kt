@@ -24,6 +24,7 @@ abstract class LedgerDatabase : RoomDatabase() {
                     LedgerDatabase::class.java,
                     "together_ledger.db"
                 )
+                    // 기본 데이터 넣어두기. 그래야 처음에 예쁘게 보이니까..
                 .createFromAsset("database/together_ledger.db")
                 .fallbackToDestructiveMigration()
                 .build()

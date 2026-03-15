@@ -64,4 +64,60 @@ object NotificationHelper {
         return afterArrow.ifEmpty { content.substringBefore(" ") }
     }
 
+    fun extractHanaCardAmount(content: String): Int {
+        // 패턴: [(결제) 2,400원] -> 괄호 안의 결제/취소와 금액 추출
+        // \([\d,]+\) : 숫자와 콤마를 포함한 금액 그룹
+        val regex = Regex("""\[(?:\(\w+\))\s+([\d,]+)원\]""")
+        val matchResult = regex.find(content)
+
+        return matchResult?.groupValues?.get(1)
+            ?.replace(",", "")
+            ?.toIntOrNull() ?: 0
+    }
+
+    fun extractHanaCardContent(content: String): String {
+        // 1. 대괄호 부분(금액 정보)을 제외한 나머지 문자열을 가져옴
+        // content.substringAfter("] ")는 "[...] " 뒤의 내용을 반환
+        val afterBracket = content.substringAfter("] ", "").trim()
+
+        // 2. 슬래시(/) 전까지의 내용만 추출
+        return afterBracket.substringBefore("/", "").trim()
+    }
+
+    fun extractKakaoPayAmount(content: String): Int {
+        // 1. 하이픈으로 분리하여 각 줄을 리스트로 만듦
+        val lines = content.split("-")
+
+        var orderAmount = 0
+        var discountAmount = 0
+
+        for (line in lines) {
+            val trimmed = line.trim()
+            // 2. 각 라인에서 키워드와 숫자 추출
+            when {
+                trimmed.contains("주문금액") -> {
+                    orderAmount = extractNumber(trimmed)
+                }
+                trimmed.contains("할인금액") -> {
+                    discountAmount = extractNumber(trimmed)
+                }
+            }
+        }
+
+        return orderAmount - discountAmount
+    }
+
+    fun extractKakaoPayContent(content: String): String {
+        // 하이픈으로 분리 후 "구매처" 라인을 찾아 콜론 뒤의 값 추출
+        val lines = content.split("-")
+        val storeLine = lines.find { it.contains("구매처") } ?: return "알 수 없는 구매처"
+
+        return storeLine.substringAfter(":").trim()
+    }
+
+    // 금액 문자열(예: "12,000원")에서 숫자만 추출하는 도우미 함수
+    private fun extractNumber(text: String): Int {
+        val regex = Regex("""[\d,]+""")
+        return regex.find(text)?.value?.replace(",", "")?.toIntOrNull() ?: 0
+    }
 }

@@ -127,7 +127,7 @@ class DataManagementViewModel(
     }
 
     fun extractAmount(content: String): Int {
-        val keywords = listOf("결제", "출금", "입금", "사용", "요금", "금액")
+        val keywords = listOf("결제", "출금", "입금", "사용", "요금", "금액", "할인")
 
         // 1. 모든 숫자(3자리 이상) 위치와 값을 리스트로 저장
         val pattern = Pattern.compile("(\\d{1,3}(,\\d{3})+|\\d{3,})")
@@ -160,6 +160,8 @@ class DataManagementViewModel(
         return when (packageName) {
             "com.kbstar.kbbank" -> NotificationHelper.extractKbBankContent(content)
             "com.kakaobank.channel" -> NotificationHelper.extractKakaobankContent(content)
+            "com.hanaskcard.paycla" -> NotificationHelper.extractHanaCardContent(content)
+            "com.kakaopay.app" -> NotificationHelper.extractKakaoPayContent(content)
             else -> extractContent(content) // 기본 로직 유지
         }
     }
@@ -169,13 +171,15 @@ class DataManagementViewModel(
         return when (packageName) {
             "com.kbstar.kbbank" -> NotificationHelper.extractKbBankAmount(content)
             "com.kakaobank.channel" -> NotificationHelper.extractKakaobankAmount(content)
+            "com.hanaskcard.paycla" -> NotificationHelper.extractHanaCardAmount(content)
+            "com.kakaopay.app" -> NotificationHelper.extractKakaoPayAmount(content)
             else -> extractAmount(content) // 기본 로직 유지
         }
     }
 
     fun isIncome(content: String): Boolean {
         // 1. 수입을 나타내는 대표적인 키워드들
-        val incomeKeywords = listOf("입금", "취소", "환급")
+        val incomeKeywords = listOf("입금", "취소", "환급", "할인")
 
         // 2. 지출을 나타내는 대표적인 키워드들
         val expenseKeywords = listOf("출금", "결제", "승인", "사용", "지불")
