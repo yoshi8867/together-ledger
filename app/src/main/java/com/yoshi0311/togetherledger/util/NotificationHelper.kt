@@ -85,39 +85,21 @@ object NotificationHelper {
     }
 
     fun extractKakaoPayAmount(content: String): Int {
-        // 1. 하이픈으로 분리하여 각 줄을 리스트로 만듦
-        val lines = content.split("-")
+        // 1. "OO원을" 이라는 패턴을 찾음
+        // 2. 그 앞의 숫자와 콤마를 추출
+        val regex = Regex("""([\d,]+)원""")
+        val matchResult = regex.find(content)
 
-        var orderAmount = 0
-        var discountAmount = 0
-
-        for (line in lines) {
-            val trimmed = line.trim()
-            // 2. 각 라인에서 키워드와 숫자 추출
-            when {
-                trimmed.contains("주문금액") -> {
-                    orderAmount = extractNumber(trimmed)
-                }
-                trimmed.contains("할인금액") -> {
-                    discountAmount = extractNumber(trimmed)
-                }
-            }
-        }
-
-        return orderAmount - discountAmount
+        return matchResult?.groupValues?.get(1)
+            ?.replace(",", "")
+            ?.toIntOrNull() ?: 0
     }
 
     fun extractKakaoPayContent(content: String): String {
-        // 하이픈으로 분리 후 "구매처" 라인을 찾아 콜론 뒤의 값 추출
-        val lines = content.split("-")
-        val storeLine = lines.find { it.contains("구매처") } ?: return "알 수 없는 구매처"
+        // 1. "]" 뒤의 문구를 가져옴: "CU 망원센터점에서 2,800원을..."
+        val afterBracket = content.substringAfter("]", "").trim()
 
-        return storeLine.substringAfter(":").trim()
-    }
-
-    // 금액 문자열(예: "12,000원")에서 숫자만 추출하는 도우미 함수
-    private fun extractNumber(text: String): Int {
-        val regex = Regex("""[\d,]+""")
-        return regex.find(text)?.value?.replace(",", "")?.toIntOrNull() ?: 0
+        // 2. "에서" 앞의 문구만 잘라냄
+        return afterBracket.substringBefore("에서", "").trim()
     }
 }
