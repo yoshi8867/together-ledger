@@ -95,6 +95,13 @@ dependencies {
 
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
+    // Retrofit (동기화 API 클라이언트)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+
+    // WorkManager (서버 슬립 방지)
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+
 //    implementation("com.google.dagger:hilt-android:2.51.1")
 //    ksp("com.google.dagger:hilt-compiler:2.51.1") // 또는 ksp(...)
 }

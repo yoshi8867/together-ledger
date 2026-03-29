@@ -9,6 +9,7 @@ import com.yoshi0311.togetherledger.LedgerApplication
 import com.yoshi0311.togetherledger.ui.menu.DataManagementScreen
 import com.yoshi0311.togetherledger.ui.menu.DataManagementViewModel
 import com.yoshi0311.togetherledger.ui.menu.HomeViewModel
+import com.yoshi0311.togetherledger.ui.sync.SyncSettingsViewModel
 import com.yoshi0311.togetherledger.ui.transaction.TransactionDetailsViewModel
 import com.yoshi0311.togetherledger.ui.transaction.TransactionEditViewModel
 import com.yoshi0311.togetherledger.ui.transaction.TransactionEntryViewModel
@@ -47,6 +48,13 @@ object AppViewModelProvider {
                 ledgerApplication().container.categoriesRepository,
                 ledgerApplication().container.notificationsRepository,
                 ledgerApplication().container.appSettingsRepository,
+            )
+        }
+        // Initializer for SyncSettingsViewModel
+        initializer {
+            SyncSettingsViewModel(
+                ledgerApplication().container.syncSettingsRepository,
+                ledgerApplication().container.syncManager,
             )
         }
     }

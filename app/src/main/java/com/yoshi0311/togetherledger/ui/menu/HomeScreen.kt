@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -104,6 +105,7 @@ fun HomeScreen(
     navigateToTransactionEntry: () -> Unit,
     navigateToTransactionUpdate: (Int) -> Unit,
     navigateToDataManagement: () -> Unit,
+    navigateToSyncSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
@@ -120,6 +122,12 @@ fun HomeScreen(
                     canNavigateBack = false,
                     scrollBehavior = scrollBehavior,
                     actions = {
+                        IconButton(onClick = navigateToSyncSettings) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "동기화 설정"
+                            )
+                        }
                         IconButton(onClick = navigateToDataManagement) {
                             Icon(
                                 imageVector = Icons.Default.Settings,

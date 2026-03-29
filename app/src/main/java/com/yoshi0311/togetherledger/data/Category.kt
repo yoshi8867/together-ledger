@@ -9,4 +9,9 @@ data class Category(
     val id: Int = 0,
     val name: String = "",
     val isIncome: Boolean = false,
+    val serverId: String? = null,
+    val syncStatus: String = SyncStatus.PENDING,
+    val syncedAt: Long? = null,
+    val localUpdatedAt: Long = System.currentTimeMillis(),
+    val isDeleted: Boolean = false,
 )

@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yoshi0311.togetherledger.data.CategoriesRepository
 import com.yoshi0311.togetherledger.data.Category
+import com.yoshi0311.togetherledger.data.SyncStatus
 import com.yoshi0311.togetherledger.data.TransactionsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +39,20 @@ class TransactionEditViewModel(
 
     suspend fun updateTransaction() {
         if (validateInput(transactionUiState.transactionDetails)) {
-            transactionsRepository.updateTransaction(transactionUiState.transactionDetails.toTransaction())
+            val existing = transactionsRepository.getTransactionById(transactionId) ?: return
+            val details = transactionUiState.transactionDetails
+            transactionsRepository.updateTransaction(
+                existing.copy(
+                    categoryId = details.categoryId,
+                    content = details.content,
+                    timeStamp = details.timeStamp,
+                    amount = details.amount.toIntOrNull() ?: 0,
+                    assetType = details.assetType,
+                    isIncome = details.isIncome,
+                    syncStatus = SyncStatus.PENDING,
+                    localUpdatedAt = System.currentTimeMillis(),
+                )
+            )
         }
     }
 

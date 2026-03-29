@@ -14,7 +14,25 @@ class OfflineTransactionsRepository(private val transactionDao: TransactionDao) 
 
     override suspend fun insertTransaction(transaction: Transaction) = transactionDao.insert(transaction)
 
-    override suspend fun deleteTransaction(transaction: Transaction) = transactionDao.delete(transaction)
+    override suspend fun deleteTransaction(transaction: Transaction) {
+        if (transaction.serverId == null) {
+            transactionDao.hardDelete(transaction)
+        } else {
+            transactionDao.softDelete(transaction.id, System.currentTimeMillis())
+        }
+    }
 
-    override suspend fun updateTransaction(transaction: Transaction) =  transactionDao.update(transaction)
+    override suspend fun updateTransaction(transaction: Transaction) = transactionDao.update(transaction)
+
+    override suspend fun getTransactionById(id: Int): Transaction? = transactionDao.getTransactionById(id)
+    override suspend fun hardDeleteById(id: Int) = transactionDao.deleteById(id)
+
+    override suspend fun getPendingTransactions(): List<Transaction> =
+        transactionDao.getPendingTransactions()
+
+    override suspend fun syncUpdateStatus(id: Int, serverId: String, status: String, syncedAt: Long) =
+        transactionDao.updateSyncStatus(id, serverId, status, syncedAt)
+
+    override suspend fun getTransactionByServerId(serverId: String): Transaction? =
+        transactionDao.getTransactionByServerId(serverId)
 }

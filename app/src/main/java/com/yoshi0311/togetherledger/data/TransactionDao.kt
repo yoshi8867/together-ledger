@@ -12,16 +12,17 @@ import java.time.LocalDateTime
 @Dao
 interface TransactionDao {
     @Query("""
-        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId, 
+        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId,
                COALESCE(c.name, ' ') AS categoryName
         FROM transactions AS t
         LEFT JOIN categories AS c ON t.categoryId = c.id
+        WHERE t.isDeleted = 0
         ORDER BY t.timeStamp DESC
     """)
     fun getAllTransactions(): Flow<List<TransactionInfo>>
 
     @Query("""
-        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId, 
+        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId,
                COALESCE(c.name, ' ') AS categoryName
         FROM transactions AS t
         LEFT JOIN categories AS c ON t.categoryId = c.id
@@ -30,23 +31,24 @@ interface TransactionDao {
     fun getTransaction(id: Int): Flow<TransactionInfo>
 
     @Query("""
-        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId, 
+        SELECT t.id, t.content, t.timeStamp, t.amount, t.assetType, t.isIncome, t.categoryId,
                COALESCE(c.name, ' ') AS categoryName
         FROM transactions AS t
         LEFT JOIN categories AS c ON t.categoryId = c.id
-        WHERE t.timeStamp >= :start AND t.timeStamp < :end
+        WHERE t.timeStamp >= :start AND t.timeStamp < :end AND t.isDeleted = 0
         ORDER BY DATE(t.timeStamp) DESC, TIME(t.timeStamp) ASC
     """)
     fun getTransactionsByPeriod(
-        start: String, // LocalDateTime, // 나중에 String에서 LocalDateTime으로 바꿀 것
-        end: String, // LocalDateTime,
+        start: String,
+        end: String,
     ): Flow<List<TransactionInfo>>
 
     @Query("""
-        SELECT * FROM transactions 
-        WHERE timeStamp = :timeStamp 
-        AND isIncome = :isIncome 
+        SELECT * FROM transactions
+        WHERE timeStamp = :timeStamp
+        AND isIncome = :isIncome
         AND (amount = :amount OR content = :content)
+        AND isDeleted = 0
         LIMIT 1
     """)
     suspend fun findTransaction(timeStamp: String, isIncome: Boolean, amount: Int, content: String): Transaction?
@@ -58,5 +60,23 @@ interface TransactionDao {
     suspend fun update(transaction: Transaction)
 
     @Delete
-    suspend fun delete(transaction: Transaction)
+    suspend fun hardDelete(transaction: Transaction)
+
+    @Query("UPDATE transactions SET isDeleted = 1, syncStatus = 'PENDING', localUpdatedAt = :now WHERE id = :id")
+    suspend fun softDelete(id: Int, now: Long)
+
+    @Query("SELECT * FROM transactions WHERE syncStatus = 'PENDING'")
+    suspend fun getPendingTransactions(): List<Transaction>
+
+    @Query("UPDATE transactions SET serverId = :serverId, syncStatus = :status, syncedAt = :syncedAt WHERE id = :id")
+    suspend fun updateSyncStatus(id: Int, serverId: String, status: String, syncedAt: Long)
+
+    @Query("SELECT * FROM transactions WHERE serverId = :serverId LIMIT 1")
+    suspend fun getTransactionByServerId(serverId: String): Transaction?
+
+    @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
+    suspend fun getTransactionById(id: Int): Transaction?
+
+    @Query("DELETE FROM transactions WHERE id = :id")
+    suspend fun deleteById(id: Int)
 }
