@@ -60,4 +60,5 @@
     <string name="app_push_setting">앱 푸시 설정</string>
     <string name="import_from_excel">엑셀(csv) 읽어오기</string>
     <string name="export_to_excel">엑셀(csv) 내보내기</string>
+    <string name="sync_settings_title">동기화 설정</string>
 </resources>

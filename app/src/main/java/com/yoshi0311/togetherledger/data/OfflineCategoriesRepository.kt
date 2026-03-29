@@ -15,11 +15,27 @@ class OfflineCategoriesRepository(private val categoryDao: CategoryDao) : Catego
     override suspend fun insertCategory(category: Category) =
         categoryDao.insert(category)
 
-    override suspend fun deleteCategory(category: Category) =
-        categoryDao.delete(category)
+    override suspend fun deleteCategory(category: Category) {
+        if (category.serverId == null) {
+            categoryDao.hardDelete(category)
+        } else {
+            categoryDao.softDelete(category.id, System.currentTimeMillis())
+        }
+    }
 
     override suspend fun updateCategory(category: Category) =
         categoryDao.update(category)
+
+    override suspend fun hardDeleteById(id: Int) = categoryDao.deleteById(id)
+
+    override suspend fun getPendingCategories(): List<Category> =
+        categoryDao.getPendingCategories()
+
+    override suspend fun syncUpdateStatus(id: Int, serverId: String, status: String, syncedAt: Long) =
+        categoryDao.updateSyncStatus(id, serverId, status, syncedAt)
+
+    override suspend fun getCategoryByServerId(serverId: String): Category? =
+        categoryDao.getCategoryByServerId(serverId)
 
     override suspend fun getOrCreateCategoryId(categoryName: String): Int {
         // 1. 이름으로 카테고리 ID 조회

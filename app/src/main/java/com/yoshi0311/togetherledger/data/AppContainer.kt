@@ -7,6 +7,8 @@ interface AppContainer {
     val categoriesRepository: CategoriesRepository
     val notificationsRepository: NotificationsRepository
     val appSettingsRepository: AppSettingsRepository
+    val syncSettingsRepository: SyncSettingsRepository
+    val syncManager: SyncManager
 }
 
 class AppDataContainer(private val context: Context) : AppContainer {
@@ -20,6 +22,12 @@ class AppDataContainer(private val context: Context) : AppContainer {
         OfflineNotificationsRepository(LedgerDatabase.getDatabase(context).notificationDao())
     }
     override val appSettingsRepository: AppSettingsRepository by lazy {
-        AppSettingsRepository(context.dataStore) // context.dataStore 확장 함수 사용
+        AppSettingsRepository(context.dataStore)
+    }
+    override val syncSettingsRepository: SyncSettingsRepository by lazy {
+        SyncSettingsRepository(context.syncDataStore)
+    }
+    override val syncManager: SyncManager by lazy {
+        SyncManager(context, categoriesRepository, transactionsRepository, syncSettingsRepository)
     }
 }

@@ -29,7 +29,8 @@ class TransactionDetailsViewModel(
             )
 
     suspend fun deleteItem() {
-        transactionsRepository.deleteTransaction(uiState.value.transactionDetails.toTransaction())
+        val transaction = transactionsRepository.getTransactionById(transactionId) ?: return
+        transactionsRepository.deleteTransaction(transaction)
     }
 
     companion object {
